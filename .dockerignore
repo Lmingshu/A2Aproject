@@ -1,0 +1,17 @@
+# 构建镜像时忽略，减小上下文与镜像体积
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+.env
+.env.*
+!.env.example
+*.md
+docs
+.cursor
+.venv
+venv
+node_modules
+*.log
+.DS_Store

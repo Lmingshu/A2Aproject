@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A2A 相亲 — 月老加班中</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --bg-subtle: linear-gradient(180deg, #fef7ed 0%, #fafaf9 35%, #f5f5f4 100%);
+      --card: #fff;
+      --card-border: rgba(0,0,0,.04);
+      --red: #be123c;
+      --red-soft: #ffe4e6;
+      --pink: #be185d;
+      --blue: #1d4ed8;
+      --text: #1c1917;
+      --muted: #57534e;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,.05), 0 4px 20px rgba(0,0,0,.04);
+      --shadow-soft: 0 2px 8px rgba(0,0,0,.04);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      background-image: var(--bg-subtle);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+    .page { display: none; min-height: 100vh; padding: 32px 24px 56px; max-width: 640px; margin: 0 auto; }
+    .page.active { display: block; animation: fadeIn 0.35s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ========== 1. 首页：月老（无框、字不遮挡）========== */
+    .page-home { text-align: center; }
+    .home-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 6px;
+      letter-spacing: 0.02em;
+    }
+    .home-subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin: 0 0 28px;
+      font-weight: 500;
+    }
+    .home-bubbles {
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 0 16px;
+    }
+    .home-bubbles .bubble { max-width: 320px; }
+    .home-content-width { max-width: 320px; margin-left: auto; margin-right: auto; }
+    .bubble {
+      max-width: 100%;
+      padding: 12px 18px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: var(--shadow-soft);
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.5;
+      border: 1px solid var(--card-border);
+      position: relative;
+    }
+    .bubble::before {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+      border: 8px solid transparent;
+      border-top-color: #fff;
+      bottom: -16px;
+      left: 24px;
+      filter: drop-shadow(0 1px 0 rgba(0,0,0,.04));
+    }
+    .bubble:nth-child(even) { align-self: flex-end; }
+    .bubble:nth-child(even)::before { left: auto; right: 24px; }
+    .bubble:nth-child(4) { background: #fffbeb; border-color: rgba(251, 191, 36, .25); }
+    .bubble:nth-child(4)::before { border-top-color: #fffbeb; }
+    .yuelao-wrap {
+      margin: 20px auto 28px;
+      max-width: 320px;
+      width: 100%;
+      padding: 0 16px;
+      min-height: 180px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .yuelao-figure {
+      width: 100%;
+      max-width: 280px;
+      height: auto;
+      max-height: 260px;
+      object-fit: contain;
+      object-position: center bottom;
+      filter: drop-shadow(0 6px 20px rgba(0,0,0,.06));
+      vertical-align: bottom;
+    }
+    .yuelao-figure.img-fail { width: auto; height: auto; font-size: 5rem; filter: none; }
+    .btn-login-big {
+      display: inline-block;
+      margin: 8px 0 14px;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, var(--red) 0%, var(--pink) 100%);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(190, 18, 60, .25);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-login-big:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(190, 18, 60, .3); color: #fff; }
+    .sync-hint { font-size: 0.875rem; color: var(--muted); margin-top: 10px; font-weight: 500; }
+    .sync-hint.syncing { color: var(--blue); }
+    .home-skip { margin-top: 20px; }
+    .home-skip a { font-size: 0.875rem; color: var(--muted); text-decoration: none; }
+    .home-skip a:hover { color: var(--text); }
+
+    /* ========== 2. 个人档案页 ========== */
+    .page-profile h2 { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 24px; text-align: center; }
+    .profile-layout { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+    .avatar-zone {
+      flex: 0 0 220px;
+      text-align: center;
+      padding: 28px 24px;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--card-border);
+    }
+    .avatar-zone .avatar-box {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fef3f8, #eff6ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px solid var(--card-border);
+    }
+    .avatar-zone .avatar-box .avatar-placeholder { width: 100%; height: 100%; object-fit: contain; padding: 12%; }
+    .avatar-zone .avatar-box img:not(.avatar-placeholder) { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-zone .avatar-box.bixin { animation: bixin 0.6s ease; }
+    @keyframes bixin { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    .avatar-zone p { font-size: 0.85rem; color: var(--muted); margin: 0; }
+    .attr-card {
+      flex: 1;
+      min-width: 260px;
+      padding: 24px;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--card-border);
+    }
+    .attr-card h3 { margin: 0 0 16px; font-size: 1rem; font-weight: 600; color: var(--text); }
+    .attr-row { margin-bottom: 14px; }
+    .attr-row label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    .attr-row span { font-weight: 500; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .tag { padding: 4px 12px; background: var(--red-soft); color: var(--red); border-radius: 999px; font-size: 0.85rem; }
+    .family-slots { display: flex; gap: 12px; margin-top: 20px; }
+    .slot {
+      flex: 1;
+      height: 80px;
+      border: 2px dashed #e2e8f0;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .slot:hover { border-color: var(--pink); background: #fdf2f8; }
+    .slot.filled { border-style: solid; border-color: #86efac; background: #f0fdf4; color: #166534; }
+    .btn-next { margin-top: 24px; width: 100%; padding: 14px; background: linear-gradient(135deg, var(--blue), #7c3aed); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .btn-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; padding: 8px 14px; background: #f1f5f9; border: none; border-radius: var(--radius-sm); font-size: 0.9rem; cursor: pointer; color: var(--text); }
+    .btn-back:hover { background: #e2e8f0; }
+
+    /* ========== 3. 匹配大厅（方格陈列）========== */
+    .page-lobby h2, .page-profile h2 { text-align: center; margin-bottom: 24px; font-size: 1.35rem; font-weight: 700; color: var(--text); }
+    .lobby h2 { margin-bottom: 20px; }
+    .lobby-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .room-card {
+      background: var(--card);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      border: 1px solid var(--card-border);
+    }
+    .room-card:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.06); border-color: rgba(190, 24, 93, .35); }
+    .room-card .room-code { font-size: 1.25rem; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+    .room-card .room-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+    .room-card .room-status { font-size: 0.75rem; color: #22c55e; }
+    .room-card .room-status.waiting { color: #f59e0b; }
+    .lobby-section { background: var(--card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--card-border); }
+    .lobby-section h3 { margin: 0 0 12px; font-size: 1rem; font-weight: 600; color: var(--text); }
+    .room-input-wrap { display: flex; gap: 12px; margin-top: 12px; }
+    .room-input-wrap input { flex: 1; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); font-size: 1.05rem; letter-spacing: 0.15em; text-align: center; max-width: 160px; }
+    .room-input-wrap input:focus { outline: none; border-color: var(--blue); }
+    .btn-room { padding: 12px 20px; background: var(--blue); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; }
+    .btn-auto { display: block; width: 100%; margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #f59e0b, #ea580c); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .public-screen { margin-top: 16px; height: 140px; overflow-y: auto; padding: 12px; background: #f8fafc; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--muted); }
+    .public-screen .item { padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+
+    /* ========== 4. 虚拟相亲间 ========== */
+    .room-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+    .room-2d { position: relative; min-height: 420px; background: linear-gradient(180deg, #fefce8 0%, #fef9c3 25%, #fefce8 100%); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--card-border); }
+    .c位区 { display: flex; justify-content: center; gap: 40px; align-items: flex-end; padding: 20px 0 30px; }
+    .c位区 .avatar-seat { width: 100px; text-align: center; }
+    .c位区 .avatar-seat .avatar-img { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(145deg, #fef3f8, #eff6ff); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 0; overflow: hidden; border: 2px solid var(--card-border); }
+    .c位区 .avatar-seat .avatar-img .seat-placeholder { width: 100%; height: 100%; object-fit: contain; padding: 10%; }
+    .c位区 .avatar-seat .avatar-img img:not(.seat-placeholder) { width: 100%; height: 100%; object-fit: cover; }
+    .c位区 .avatar-seat .name { font-size: 0.9rem; font-weight: 600; }
+    .room-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .room-actions button { padding: 10px 18px; background: #fff; border: 2px solid #e2e8f0; border-radius: var(--radius-sm); font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+    .room-actions button:hover { border-color: var(--pink); background: #fdf2f8; }
+    .room-actions button.tui { background: #fef2f2; border-color: var(--red); color: var(--red); }
+    .room-actions button.exit-room { background: #f1f5f9; border-color: var(--muted); color: var(--muted); }
+    .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .长辈区 { display: flex; justify-content: space-between; margin-top: 24px; }
+    .长辈区 .side { display: flex; gap: 12px; align-items: flex-start; }
+    .长辈区 .side .parent-card { width: 76px; text-align: center; padding: 12px; background: rgba(255,255,255,.92); border-radius: var(--radius-sm); border: 1px solid var(--card-border); box-shadow: var(--shadow-soft); }
+    .长辈区 .side .parent-card .head { width: 48px; height: 48px; border-radius: 50%; background: #f1f5f9; margin: 0 auto 6px; font-size: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .长辈区 .side .parent-card .head .parent-placeholder { width: 100%; height: 100%; object-fit: contain; padding: 6%; display: block; }
+    .长辈区 .side .parent-card .bubble { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+    .chat-log-room { max-height: 200px; overflow-y: auto; margin-top: 20px; padding: 12px; background: rgba(255,255,255,.6); border-radius: var(--radius-sm); font-size: 0.9rem; }
+    .chat-log-room .msg { margin-bottom: 10px; }
+    .chat-log-room .msg .typing-cursor { display: inline-block; width: 2px; height: 1em; background: var(--red); margin-left: 2px; vertical-align: -2px; animation: blink 0.8s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .tui-popup { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .tui-popup.show { display: flex; }
+    .tui-popup .box { background: #fff; padding: 32px; border-radius: var(--radius); text-align: center; animation: tuiBounce 0.5s ease; }
+    @keyframes tuiBounce { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+    .tui-popup .emoji, .tui-popup .tui-illus { margin-bottom: 12px; }
+    .tui-popup .tui-illus { width: 80px; height: 80px; margin: 0 auto; object-fit: contain; }
+    .tui-popup .word { font-size: 1.8rem; font-weight: 800; color: var(--red); letter-spacing: 0.2em; }
+
+    /* ========== 5. 结算页 ========== */
+    .result-page { text-align: center; padding-top: 40px; }
+    .result-page h2 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 28px; }
+    .result-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; max-width: 480px; margin: 0 auto 28px; }
+    .result-buttons button { flex: 1; min-width: 180px; padding: 20px 18px; border: none; border-radius: var(--radius); font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .result-buttons .btn-ok { background: linear-gradient(135deg, #15803d, #166534); color: #fff; box-shadow: 0 2px 8px rgba(21, 128, 61, .25); }
+    .result-buttons .btn-no { background: #fff; color: var(--text); border: 1px solid var(--card-border); box-shadow: var(--shadow-soft); }
+    .result-buttons button:hover { transform: translateY(-1px); }
+    .result-feedback { display: none; margin-top: 24px; padding: 28px 24px; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--card-border); max-width: 400px; margin-left: auto; margin-right: auto; }
+    .result-feedback .result-illus { width: 72px; height: 72px; margin: 0 auto 16px; object-fit: contain; display: block; }
+    .result-feedback p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--text); }
+    .result-feedback.show { display: block; }
+  </style>
+</head>
+<body>
+  <!-- 1. 首页：登录与身份同步 -->
+  <div class="page page-home active" id="page-home">
+    <h1 class="home-title">A2A 相亲</h1>
+    <p class="home-subtitle">过年回家，相亲不尴尬</p>
+    <div class="home-bubbles">
+      <div class="bubble">年底了，月老也要冲KPI</div>
+      <div class="bubble">牵完你的牵你的</div>
+      <div class="bubble">月老正在给红线打死结...</div>
+      <div class="bubble">目前前面还有 10086 位正在疯狂连线中</div>
+    </div>
+    <div class="yuelao-wrap">
+      <img class="yuelao-figure" id="yuelao-img" src="images/yuelao.png" alt="月老" onerror="this.style.display='none'; document.getElementById('yuelao-fallback').style.display='block';" />
+      <img class="yuelao-figure" id="yuelao-fallback" src="images/avatar-default.png" alt="月老" style="display:none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+      <span class="yuelao-figure img-fail" style="display:none;font-size:4rem;">🧑‍🦳</span>
+    </div>
+    <a href="#" id="btn-secondme-login" class="btn-login-big">使用 SecondMe 授权登录</a>
+    <p class="sync-hint" id="sync-hint">登录后将同步：分身、职业、兴趣、MBTI...</p>
+    <p class="home-skip"><a href="#" id="link-skip-login">未登录？先逛逛匹配大厅</a></p>
+  </div>
+
+  <!-- 2. 个人档案页 -->
+  <div class="page page-profile" id="page-profile">
+    <button type="button" class="btn-back" id="btn-back-from-profile">← 返回首页</button>
+    <h2 style="text-align:center;margin-bottom:24px;">分身确认</h2>
+    <div class="profile-layout">
+      <div class="avatar-zone">
+        <div class="avatar-box" id="my-avatar" title="点击比心"><img class="avatar-placeholder" src="images/avatar-default.png" alt=""></div>
+        <p>点击头像比心</p>
+      </div>
+      <div class="attr-card">
+        <h3>属性卡片</h3>
+        <div class="attr-row"><label>职业</label><span id="attr-job">—</span></div>
+        <div class="attr-row"><label>性格标签</label><div class="tags" id="attr-tags"></div></div>
+        <div class="attr-row"><label>亲友团席位</label></div>
+        <div class="family-slots">
+          <div class="slot" id="slot1" title="点击邀请">+</div>
+          <div class="slot" id="slot2" title="点击邀请">+</div>
+        </div>
+        <button type="button" class="btn-next" id="btn-to-lobby">确认，进入匹配大厅</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 匹配大厅 -->
+  <div class="page page-lobby lobby" id="page-lobby">
+    <button type="button" class="btn-back" id="btn-back-from-lobby">← 返回</button>
+    <h2>缘分连连看</h2>
+    <div class="lobby-toolbar">
+      <span style="font-size:0.9rem;color:var(--muted);">输入房间号快速进入</span>
+      <div class="room-input-wrap">
+        <input type="text" id="room-code" maxlength="4" placeholder="1234" />
+        <button type="button" class="btn-room" id="btn-enter-room">进入</button>
+      </div>
+    </div>
+    <div class="room-grid" id="room-grid"></div>
+    <div class="lobby-section">
+      <h3>全自动相亲托管</h3>
+      <button type="button" class="btn-auto" id="btn-auto-match">全自动相亲托管</button>
+    </div>
+    <div class="lobby-section">
+      <h3>大厅公屏</h3>
+      <div class="public-screen" id="public-screen">
+        <div class="item">恭喜王和李的 AI 牵手成功！</div>
+        <div class="item">赵**的 AI 刚刚因为「豆腐脑咸甜之争」掀桌了！</div>
+        <div class="item">孙**的 AI 与周**的 AI 正在聊人生理想…</div>
+        <div class="item">吴**的 AI 被家长满意度点满 👍👍👍👍</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. A2A 虚拟相亲间 -->
+  <div class="page" id="page-room">
+    <div class="room-header">
+      <button type="button" class="btn-back exit-room" id="btn-exit-room">← 退出房间</button>
+      <h2 style="margin:0;font-size:1.2rem;">虚拟相亲间</h2>
+      <span style="width:80px;"></span>
+    </div>
+    <div class="room-2d">
+      <div class="c位区">
+        <div class="avatar-seat"><div class="avatar-img" id="room-male"><img class="seat-placeholder" src="images/avatar-male.png" alt=""></div><div class="name" id="room-male-name">男方</div></div>
+        <div class="avatar-seat"><div class="avatar-img" id="room-female"><img class="seat-placeholder" src="images/avatar-female.png" alt=""></div><div class="name" id="room-female-name">女方</div></div>
+      </div>
+      <div class="room-actions">
+        <button type="button" data-act="wave">挥手</button>
+        <button type="button" data-act="nod">点头</button>
+        <button type="button" data-act="heart">比心</button>
+        <button type="button" data-act="leave">尴尬离场</button>
+        <button type="button" class="tui" id="btn-tui">退退退</button>
+      </div>
+      <p style="text-align:center;margin-top:8px;"><button type="button" class="btn-back exit-room" id="btn-exit-room-bottom">← 退出房间</button></p>
+      <div class="长辈区">
+        <div class="side"><div class="parent-card"><div class="head"><img class="parent-placeholder" src="images/parent-family.png" alt=""></div><div class="bubble">满意度：👍👍👍👍</div></div></div>
+        <div class="side"><div class="parent-card"><div class="head"><img class="parent-placeholder" src="images/parent-family.png" alt=""></div><div class="bubble">正在组织语言</div></div></div>
+      </div>
+      <div class="chat-log-room" id="chat-log-room"></div>
+    </div>
+    <div class="tui-popup" id="tui-popup">
+      <div class="box"><img class="tui-illus" src="images/tui.png" alt=""><div class="word">退！退！退！</div></div>
+    </div>
+  </div>
+
+  <!-- 5. 评价与结算 -->
+  <div class="page result-page" id="page-result">
+    <button type="button" class="btn-back" id="btn-back-from-result" style="margin-left:auto;margin-right:auto;display:block;">← 返回大厅</button>
+    <h2>相亲结算</h2>
+    <div class="result-buttons">
+      <button type="button" class="btn-ok" id="btn-result-ok">天作之合，牵手成功</button>
+      <button type="button" class="btn-no" id="btn-result-no">分身不合，江湖再见</button>
+    </div>
+    <div class="result-feedback" id="result-success">
+      <img class="result-illus" src="images/result-success.png" alt="">
+      <p>恭喜！缘分已牵好，记得线下见面哦～</p>
+    </div>
+    <div class="result-feedback" id="result-reject">
+      <img class="result-illus" src="images/result-bye.png" alt="">
+      <p>没关系，下一个会更好！</p>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+    let authSessionId = null;
+    let myProfile = null;
+
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    function getLoginUrl() {
+      return (API_BASE || '') + '/api/auth/secondme/login?redirect_path=' + encodeURIComponent('/');
+    }
+
+    // 首页：SecondMe 登录
+    document.getElementById('btn-secondme-login').href = getLoginUrl();
+    document.getElementById('btn-secondme-login').addEventListener('click', function(e) {
+      const url = getLoginUrl();
+      if (url.startsWith('http')) e.preventDefault();
+      else return;
+      window.location.href = url;
+    });
+    document.getElementById('link-skip-login').addEventListener('click', function(e) { e.preventDefault(); showPage('page-lobby'); });
+
+    // 回调或已有 Cookie 时检查登录态并拉取档案
+    (function initAuth() {
+      const params = new URLSearchParams(window.location.search);
+      const session = params.get('session');
+      const error = params.get('error');
+      const hint = document.getElementById('sync-hint');
+      if (error) {
+        if (hint) hint.textContent = '登录失败：' + (error === 'missing_code' ? '未收到授权码' : error === 'token_failed' ? 'Token 交换失败' : error === 'no_token' ? '未获取到 Token' : error);
+        return;
+      }
+      const doFetch = (sid) => {
+        if (sid) authSessionId = sid;
+        if (hint && session) { hint.textContent = '正在抓取你的分身、职业、兴趣、MBTI...'; hint.classList.add('syncing'); }
+        var url = API_BASE + '/api/auth/me';
+        if (sid) url += '?session_id=' + encodeURIComponent(sid);
+        fetch(url, { credentials: 'include' })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.logged_in && data.profile) {
+              myProfile = data;
+              if (hint) hint.textContent = '同步完成！';
+              setTimeout(function() { showPage('page-profile'); }, session ? 800 : 0);
+              fillProfilePage(data);
+            } else if (hint && session) {
+              hint.textContent = '同步失败，请重试';
+              hint.classList.remove('syncing');
+            }
+            if (params.has('session')) try { window.history.replaceState({}, '', window.location.pathname || '/'); } catch(_) {}
+          })
+          .catch(function() {
+            if (hint) { hint.textContent = '网络异常，请重试'; hint.classList.remove('syncing'); }
+          });
+      };
+      if (session) doFetch(session);
+      else doFetch();
+    })();
+
+    function fillProfilePage(data) {
+      const p = data.profile || {};
+      const jobEl = document.getElementById('attr-job');
+      if (jobEl) jobEl.textContent = p.occupation || '—';
+      const tagsEl = document.getElementById('attr-tags');
+      if (tagsEl) {
+        const tags = (p.hobbies || '').split(/[,，、]/).filter(Boolean).slice(0, 6);
+        tagsEl.innerHTML = tags.length ? tags.map(t => '<span class="tag">' + t.trim() + '</span>').join('') : '<span class="tag">待补充</span>';
+      }
+      const avatarBox = document.getElementById('my-avatar');
+      if (avatarBox && (data.avatar_url || p.avatar_url)) {
+        avatarBox.innerHTML = '<img src="' + (data.avatar_url || p.avatar_url) + '" alt="avatar" />';
+      } else if (avatarBox) {
+        avatarBox.innerHTML = '<img class="avatar-placeholder" src="images/avatar-default.png" alt="">';
+      }
+    }
+
+    // 档案页：比心
+    document.getElementById('my-avatar').addEventListener('click', function() {
+      this.classList.add('bixin');
+      setTimeout(() => this.classList.remove('bixin'), 600);
+    });
+
+    document.getElementById('btn-to-lobby').addEventListener('click', function() { showPage('page-lobby'); renderRoomGrid(); });
+
+    document.getElementById('btn-back-from-profile').addEventListener('click', function() { showPage('page-home'); });
+    document.getElementById('btn-back-from-lobby').addEventListener('click', function() { showPage(myProfile ? 'page-profile' : 'page-home'); });
+    document.getElementById('btn-back-from-result').addEventListener('click', function() { showPage('page-lobby'); renderRoomGrid(); });
+
+    document.getElementById('slot1').addEventListener('click', function() { this.classList.toggle('filled'); this.textContent = this.classList.contains('filled') ? '✓' : '+'; });
+    document.getElementById('slot2').addEventListener('click', function() { this.classList.toggle('filled'); this.textContent = this.classList.contains('filled') ? '✓' : '+'; });
+
+    // 大厅：示例房间方格
+    var sampleRooms = [
+      { code: '1001', desc: '长辈介绍·张阿姨组', status: 'chatting' },
+      { code: '1002', desc: '朋友牵线·周末场', status: 'waiting' },
+      { code: '2024', desc: '新年专场', status: 'chatting' },
+      { code: '1234', desc: '测试房间', status: 'waiting' },
+      { code: '8888', desc: '吉利号·缘分局', status: 'waiting' },
+      { code: '6666', desc: '六六大顺', status: 'chatting' },
+    ];
+    function renderRoomGrid() {
+      var el = document.getElementById('room-grid');
+      if (!el) return;
+      el.innerHTML = sampleRooms.map(function(r) {
+        var statusClass = r.status === 'chatting' ? '' : ' waiting';
+        var statusText = r.status === 'chatting' ? '畅聊中' : '等待中';
+        return '<div class="room-card" data-code="' + r.code + '"><div class="room-code">' + r.code + '</div><div class="room-desc">' + r.desc + '</div><div class="room-status' + statusClass + '">' + statusText + '</div></div>';
+      }).join('');
+      el.querySelectorAll('.room-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+          var code = this.getAttribute('data-code');
+          if (code) { document.getElementById('room-code').value = code; createAndStartSession(code); }
+        });
+      });
+    }
+    renderRoomGrid();
+
+    // 大厅：进入房间（对接现有创建会话 + 畅聊）
+    document.getElementById('btn-enter-room').addEventListener('click', function() {
+      const code = (document.getElementById('room-code').value || '').trim();
+      if (code.length !== 4) { alert('请输入 4 位房间号'); return; }
+      createAndStartSession(code);
+    });
+
+    document.getElementById('btn-auto-match').addEventListener('click', function() {
+      createAndStartSession('auto');
+    });
+
+    function createAndStartSession(roomCode) {
+      const payload = {
+        male: myProfile && myProfile.profile ? { display_name: myProfile.name || myProfile.profile.display_name, occupation: myProfile.profile.occupation, extra: myProfile.profile.hobbies } : { display_name: '男方' },
+        female: { display_name: '女方' },
+        male_parent: { display_name: '男方家长' },
+        female_parent: { display_name: '女方家长' },
+        max_rounds: 6
+      };
+      if (authSessionId) payload.secondme_male_session_id = authSessionId;
+      fetch(API_BASE + '/api/dating/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then(r => r.json())
+        .then(d => {
+          showPage('page-room');
+          document.getElementById('room-male-name').textContent = (payload.male && payload.male.display_name) || '男方';
+          document.getElementById('room-female-name').textContent = (payload.female && payload.female.display_name) || '女方';
+          startRoomEvents(d.session_id);
+        })
+        .catch(err => alert('创建失败：' + err.message));
+    }
+
+    function startRoomEvents(sessionId) {
+      const logEl = document.getElementById('chat-log-room');
+      if (!logEl) return;
+      logEl.innerHTML = '';
+      var eventQueue = [];
+      var isTyping = false;
+      var currentEvt = null;
+
+      function scrollToBottom() { logEl.scrollTop = logEl.scrollHeight; }
+
+      function typeInto(container, text, options, onDone) {
+        options = options || {};
+        var speed = options.speed != null ? options.speed : 72;
+        var chunk = options.chunk != null ? options.chunk : 1;
+        var idx = 0;
+        var cursor = document.createElement('span');
+        cursor.className = 'typing-cursor';
+        container.appendChild(cursor);
+        function tick() {
+          if (idx >= text.length) {
+            cursor.remove();
+            onDone();
+            return;
+          }
+          var end = Math.min(idx + chunk, text.length);
+          var segment = text.slice(idx, end);
+          var node = document.createTextNode(segment);
+          container.insertBefore(node, cursor);
+          idx = end;
+          scrollToBottom();
+          setTimeout(tick, speed);
+        }
+        tick();
+      }
+
+      function processQueue() {
+        if (isTyping || eventQueue.length === 0) return;
+        var item = eventQueue.shift();
+        if (item.type === 'round_start') {
+          var wrap = document.createElement('div');
+          wrap.className = 'msg';
+          wrap.innerHTML = '<strong>【第' + item.round + '轮】</strong> ';
+          logEl.appendChild(wrap);
+          var contentSpan = document.createElement('span');
+          wrap.appendChild(contentSpan);
+          isTyping = true;
+          typeInto(contentSpan, item.goal || '', { speed: 60, chunk: 2 }, function() {
+            isTyping = false;
+            scrollToBottom();
+            processQueue();
+          });
+        } else if (item.type === 'message') {
+          var name = item.display_name || item.role || '';
+          var wrap = document.createElement('div');
+          wrap.className = 'msg';
+          wrap.innerHTML = '<strong>' + escapeHtml(name) + '：</strong> ';
+          var contentSpan = document.createElement('span');
+          wrap.appendChild(contentSpan);
+          logEl.appendChild(wrap);
+          isTyping = true;
+          typeInto(contentSpan, item.content || '', { speed: 58, chunk: 2 }, function() {
+            isTyping = false;
+            scrollToBottom();
+            processQueue();
+          });
+        } else if (item.type === 'summary') {
+          var wrap = document.createElement('div');
+          wrap.className = 'msg';
+          wrap.style.cssText = 'background:#fef3c7;padding:8px;border-radius:8px;';
+          wrap.innerHTML = '📋 ';
+          var contentSpan = document.createElement('span');
+          wrap.appendChild(contentSpan);
+          logEl.appendChild(wrap);
+          isTyping = true;
+          typeInto(contentSpan, item.summary_text || '', { speed: 52, chunk: 2 }, function() {
+            isTyping = false;
+            scrollToBottom();
+            currentEvt.close();
+            setTimeout(function() { showPage('page-result'); }, 1200);
+          });
+        }
+      }
+
+      function escapeHtml(s) {
+        var div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      fetch(API_BASE + '/api/dating/sessions/' + sessionId + '/start', { method: 'POST' });
+      currentEvt = new EventSource(API_BASE + '/api/dating/sessions/' + sessionId + '/events');
+      currentEvt.onmessage = function(e) {
+        try {
+          var data = JSON.parse(e.data);
+          if (data.type === 'round_start') {
+            eventQueue.push({ type: 'round_start', round: data.round, goal: data.goal || '' });
+          } else if (data.type === 'message') {
+            eventQueue.push({
+              type: 'message',
+              display_name: data.display_name,
+              role: data.role,
+              content: data.content || ''
+            });
+          } else if (data.type === 'summary') {
+            eventQueue.push({ type: 'summary', summary_text: data.summary_text || '' });
+          }
+          processQueue();
+        } catch (_) {}
+      };
+    }
+
+    document.querySelectorAll('.room-actions button[data-act]').forEach(btn => {
+      btn.addEventListener('click', function() { this.style.transform = 'scale(0.95)'; setTimeout(() => { this.style.transform = ''; }, 150); });
+    });
+    document.getElementById('btn-tui').addEventListener('click', function() {
+      var popup = document.getElementById('tui-popup');
+      popup.classList.add('show');
+      setTimeout(function() { popup.classList.remove('show'); }, 1200);
+    });
+
+    function exitRoom() { showPage('page-lobby'); renderRoomGrid(); }
+    document.getElementById('btn-exit-room').addEventListener('click', exitRoom);
+    document.getElementById('btn-exit-room-bottom').addEventListener('click', exitRoom);
+
+    document.getElementById('btn-result-ok').addEventListener('click', function() {
+      document.getElementById('result-success').classList.add('show');
+      document.getElementById('result-reject').classList.remove('show');
+    });
+    document.getElementById('btn-result-no').addEventListener('click', function() {
+      document.getElementById('result-reject').classList.add('show');
+      document.getElementById('result-success').classList.remove('show');
+    });
+  </script>
+</body>
+</html>
