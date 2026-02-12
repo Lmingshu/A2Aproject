@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from backend.dating.models import AgentRole, DatingProfile, DatingSessionState
 from backend.dating.engine import ConversationEngine, create_session
-from backend.dating.infra.llm_client import ClaudeLLMClient, MockLLMClient
+from backend.dating.infra.llm_client import ClaudeLLMClient, KimiLLMClient, MockLLMClient
 from backend.dating.adapters import secondme_to_dating_profile
 from backend.api.events import get_event_pusher
 from backend.auth.session_store import get_session as get_auth_session
@@ -31,15 +31,26 @@ engine: Optional[ConversationEngine] = None
 def _get_engine() -> ConversationEngine:
     global engine
     if engine is None:
+        client = None
+        # 优先级：Kimi > Claude > Mock
         try:
-            llm = ClaudeLLMClient()
-            if llm.api_key:
-                client = llm
-            else:
-                client = MockLLMClient()
+            kimi = KimiLLMClient()
+            if kimi.api_key:
+                client = kimi
+                logger.info("使用 Kimi (Moonshot AI) 作为 LLM 引擎")
         except Exception as e:
-            logger.warning("LLM init fallback to mock: %s", e)
+            logger.warning("Kimi init failed: %s", e)
+        if not client:
+            try:
+                claude = ClaudeLLMClient()
+                if claude.api_key:
+                    client = claude
+                    logger.info("使用 Claude 作为 LLM 引擎")
+            except Exception as e:
+                logger.warning("Claude init failed: %s", e)
+        if not client:
             client = MockLLMClient()
+            logger.warning("未配置 API Key，使用 Mock 回复")
         pusher = get_event_pusher()
         engine = ConversationEngine(
             llm_client=client,
@@ -75,7 +86,7 @@ class ProfileInput(BaseModel):
     family_view: str = ""
     expectation: str = ""
     extra: str = ""
-
+    avatar_url: str = ""  # 新增头像支持
 
 class CreateSessionRequest(BaseModel):
     male: Optional[ProfileInput] = None
@@ -83,9 +94,91 @@ class CreateSessionRequest(BaseModel):
     male_parent: Optional[ProfileInput] = None
     female_parent: Optional[ProfileInput] = None
     max_rounds: int = 6
-    # 若已用 SecondMe 登录，可传对应 auth session_id，用其档案作为男方/女方
     secondme_male_session_id: Optional[str] = None
     secondme_female_session_id: Optional[str] = None
+    # 新增：指定对手 ID (来自大厅)
+    target_user_id: Optional[str] = None
+    my_user_id: Optional[str] = None  # 当前用户 ID (用于加入大厅)
+
+# ... (保留 create_dating_session 但需修改逻辑) ...
+
+from backend.dating.lobby import get_lobby_users, add_user_to_lobby, get_user_from_lobby, get_npc_meta, init_lobby, random_match
+
+# 初始化大厅
+init_lobby()
+
+@router.get("/dating/lobby")
+async def get_lobby():
+    """获取大厅用户列表"""
+    return {"users": get_lobby_users()}
+
+
+@router.post("/dating/auto-match", response_model=dict)
+async def auto_match(body: CreateSessionRequest) -> dict:
+    """全自动匹配：根据用户性别随机选一个异性 NPC，自动创建会话并开始对话。"""
+    profiles = {}
+
+    # 1. 确定用户自己的档案
+    my_profile = None
+    if body.secondme_male_session_id:
+        auth_sess = get_auth_session(body.secondme_male_session_id)
+        if auth_sess and auth_sess.get("user_info"):
+            my_profile = secondme_to_dating_profile(auth_sess["user_info"], AgentRole.MALE)
+            profiles[AgentRole.MALE] = my_profile
+    if not my_profile and body.male:
+        my_profile = _profile_from_input(AgentRole.MALE, body.male)
+        profiles[AgentRole.MALE] = my_profile
+
+    # 2. 随机选一个异性 NPC
+    my_role = AgentRole.MALE if AgentRole.MALE in profiles else AgentRole.FEMALE
+    target_role = AgentRole.FEMALE if my_role == AgentRole.MALE else AgentRole.MALE
+    match_result = random_match(prefer_role=target_role)
+    if not match_result:
+        raise HTTPException(status_code=404, detail="大厅暂无合适的匹配对象")
+
+    npc_id, npc_profile = match_result
+    profiles[target_role] = npc_profile
+
+    # 3. 自动生成对应家长 NPC
+    npc_meta = get_npc_meta(npc_id) or {}
+    parent_role = AgentRole.FEMALE_PARENT if target_role == AgentRole.FEMALE else AgentRole.MALE_PARENT
+    my_parent_role = AgentRole.MALE_PARENT if my_role == AgentRole.MALE else AgentRole.FEMALE_PARENT
+
+    profiles[parent_role] = DatingProfile(
+        role=parent_role,
+        display_name=npc_meta.get("parent_name", f"{npc_profile.display_name}的家长"),
+        occupation="",
+        hobbies="",
+        family_view=npc_profile.family_view,
+        extra=npc_meta.get("parent_style", ""),
+    )
+    if my_parent_role not in profiles:
+        if body.male_parent:
+            profiles[my_parent_role] = _profile_from_input(my_parent_role, body.male_parent)
+        elif body.female_parent:
+            profiles[my_parent_role] = _profile_from_input(my_parent_role, body.female_parent)
+
+    session = create_session(profiles, max_rounds=body.max_rounds)
+    sessions[session.session_id] = session
+
+    # 自动开始对话
+    eng = _get_engine()
+    asyncio.create_task(eng.run_session(session))
+
+    return {
+        "session_id": session.session_id,
+        "state": session.state.value,
+        "matched_npc": {
+            "id": npc_id,
+            "display_name": npc_profile.display_name,
+            "age": npc_profile.age,
+            "occupation": npc_profile.occupation,
+            "hobbies": npc_profile.hobbies,
+            "avatar_url": npc_profile.avatar_url,
+            "extra": npc_profile.extra,
+        },
+        "message": "auto_started",
+    }
 
 
 def _profile_from_input(role: AgentRole, p: Optional[ProfileInput]) -> DatingProfile:
@@ -102,6 +195,7 @@ def _profile_from_input(role: AgentRole, p: Optional[ProfileInput]) -> DatingPro
         family_view=p.family_view or "",
         expectation=p.expectation or "",
         extra=p.extra or "",
+        avatar_url=p.avatar_url or "", # 传递头像
     )
 
 

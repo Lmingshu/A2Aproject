@@ -6,680 +6,1045 @@
   <title>A2A 相亲 — 月老加班中</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --bg: #fafaf9;
-      --bg-subtle: linear-gradient(180deg, #fef7ed 0%, #fafaf9 35%, #f5f5f4 100%);
-      --card: #fff;
-      --card-border: rgba(0,0,0,.04);
-      --red: #be123c;
-      --red-soft: #ffe4e6;
-      --pink: #be185d;
-      --blue: #1d4ed8;
-      --text: #1c1917;
-      --muted: #57534e;
-      --radius: 16px;
-      --radius-sm: 10px;
-      --shadow: 0 1px 3px rgba(0,0,0,.05), 0 4px 20px rgba(0,0,0,.04);
-      --shadow-soft: 0 2px 8px rgba(0,0,0,.04);
-    }
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      background-image: var(--bg-subtle);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      font-weight: 400;
-      letter-spacing: 0.01em;
-    }
-    .page { display: none; min-height: 100vh; padding: 32px 24px 56px; max-width: 640px; margin: 0 auto; }
-    .page.active { display: block; animation: fadeIn 0.35s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+/* ============================================================
+   全局变量与重置（温馨明亮版）
+============================================================ */
+:root{
+  --bg:#fff9f7; /* 浅暖白 */
+  --bg2:#fff0eb; /* 略深的暖色背景 */
+  --surface:#ffffff;
+  --surface2:#fdf2f4; /* 装饰性浅粉底色 */
+  --border:rgba(225,29,72,.08); /* 极淡的红色边框 */
+  --pink:#f43f5e;
+  --rose:#e11d48; /* 主色红 */
+  --gold:#f59e0b;
+  --cyan:#06b6d4;
+  --green:#10b981;
+  --purple:#8b5cf6;
+  --text:#4a4543; /* 深褐灰，柔和正文 */
+  --text2:#78716c; /* 次级灰 */
+  --text3:#a8a29e; /* 浅灰 */
+  --r:16px;
+  --r-lg:24px;
+  --r-xl:32px;
+  --shadow:0 4px 20px rgba(225,29,72,.06), 0 1px 4px rgba(0,0,0,.02);
+  --glow-pink:0 8px 32px rgba(244,63,94,.15);
+  --glow-gold:0 8px 32px rgba(245,158,11,.15);
+  --tr:all .3s cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  background-image:radial-gradient(circle at 50% 0%, #fff1f2 0%, var(--bg) 60%);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+img{display:block;max-width:100%}
 
-    /* ========== 1. 首页：月老（无框、字不遮挡）========== */
-    .page-home { text-align: center; }
-    .home-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text);
-      margin: 0 0 6px;
-      letter-spacing: 0.02em;
-    }
-    .home-subtitle {
-      font-size: 0.95rem;
-      color: var(--muted);
-      margin: 0 0 28px;
-      font-weight: 500;
-    }
-    .home-bubbles {
-      margin-bottom: 28px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 0 16px;
-    }
-    .home-bubbles .bubble { max-width: 320px; }
-    .home-content-width { max-width: 320px; margin-left: auto; margin-right: auto; }
-    .bubble {
-      max-width: 100%;
-      padding: 12px 18px;
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: var(--shadow-soft);
-      font-size: 0.9rem;
-      color: var(--text);
-      line-height: 1.5;
-      border: 1px solid var(--card-border);
-      position: relative;
-    }
-    .bubble::before {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 0;
-      border: 8px solid transparent;
-      border-top-color: #fff;
-      bottom: -16px;
-      left: 24px;
-      filter: drop-shadow(0 1px 0 rgba(0,0,0,.04));
-    }
-    .bubble:nth-child(even) { align-self: flex-end; }
-    .bubble:nth-child(even)::before { left: auto; right: 24px; }
-    .bubble:nth-child(4) { background: #fffbeb; border-color: rgba(251, 191, 36, .25); }
-    .bubble:nth-child(4)::before { border-top-color: #fffbeb; }
-    .yuelao-wrap {
-      margin: 20px auto 28px;
-      max-width: 320px;
-      width: 100%;
-      padding: 0 16px;
-      min-height: 180px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .yuelao-figure {
-      width: 100%;
-      max-width: 280px;
-      height: auto;
-      max-height: 260px;
-      object-fit: contain;
-      object-position: center bottom;
-      filter: drop-shadow(0 6px 20px rgba(0,0,0,.06));
-      vertical-align: bottom;
-    }
-    .yuelao-figure.img-fail { width: auto; height: auto; font-size: 5rem; filter: none; }
-    .btn-login-big {
-      display: inline-block;
-      margin: 8px 0 14px;
-      padding: 16px 40px;
-      background: linear-gradient(135deg, var(--red) 0%, var(--pink) 100%);
-      color: #fff;
-      font-size: 1.05rem;
-      font-weight: 600;
-      border-radius: var(--radius-sm);
-      text-decoration: none;
-      box-shadow: 0 2px 8px rgba(190, 18, 60, .25);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .btn-login-big:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(190, 18, 60, .3); color: #fff; }
-    .sync-hint { font-size: 0.875rem; color: var(--muted); margin-top: 10px; font-weight: 500; }
-    .sync-hint.syncing { color: var(--blue); }
-    .home-skip { margin-top: 20px; }
-    .home-skip a { font-size: 0.875rem; color: var(--muted); text-decoration: none; }
-    .home-skip a:hover { color: var(--text); }
+/* ============================================================
+   页面切换
+============================================================ */
+.page{display:none;min-height:100vh;max-width:720px;margin:0 auto;padding:32px 20px 60px}
+.page.active{display:block;animation:pageIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pageIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
 
-    /* ========== 2. 个人档案页 ========== */
-    .page-profile h2 { font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 24px; text-align: center; }
-    .profile-layout { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
-    .avatar-zone {
-      flex: 0 0 220px;
-      text-align: center;
-      padding: 28px 24px;
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid var(--card-border);
-    }
-    .avatar-zone .avatar-box {
-      width: 140px;
-      height: 140px;
-      margin: 0 auto 16px;
-      border-radius: 50%;
-      background: linear-gradient(145deg, #fef3f8, #eff6ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0;
-      cursor: pointer;
-      overflow: hidden;
-      border: 2px solid var(--card-border);
-    }
-    .avatar-zone .avatar-box .avatar-placeholder { width: 100%; height: 100%; object-fit: contain; padding: 12%; }
-    .avatar-zone .avatar-box img:not(.avatar-placeholder) { width: 100%; height: 100%; object-fit: cover; }
-    .avatar-zone .avatar-box.bixin { animation: bixin 0.6s ease; }
-    @keyframes bixin { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    .avatar-zone p { font-size: 0.85rem; color: var(--muted); margin: 0; }
-    .attr-card {
-      flex: 1;
-      min-width: 260px;
-      padding: 24px;
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid var(--card-border);
-    }
-    .attr-card h3 { margin: 0 0 16px; font-size: 1rem; font-weight: 600; color: var(--text); }
-    .attr-row { margin-bottom: 14px; }
-    .attr-row label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
-    .attr-row span { font-weight: 500; }
-    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-    .tag { padding: 4px 12px; background: var(--red-soft); color: var(--red); border-radius: 999px; font-size: 0.85rem; }
-    .family-slots { display: flex; gap: 12px; margin-top: 20px; }
-    .slot {
-      flex: 1;
-      height: 80px;
-      border: 2px dashed #e2e8f0;
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      color: var(--muted);
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .slot:hover { border-color: var(--pink); background: #fdf2f8; }
-    .slot.filled { border-style: solid; border-color: #86efac; background: #f0fdf4; color: #166534; }
-    .btn-next { margin-top: 24px; width: 100%; padding: 14px; background: linear-gradient(135deg, var(--blue), #7c3aed); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600; cursor: pointer; }
-    .btn-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; padding: 8px 14px; background: #f1f5f9; border: none; border-radius: var(--radius-sm); font-size: 0.9rem; cursor: pointer; color: var(--text); }
-    .btn-back:hover { background: #e2e8f0; }
+/* ============================================================
+   全局 Loader & Toast
+============================================================ */
+#loader{position:fixed;inset:0;background:rgba(255,249,247,.92);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px}
+#loader.show{display:flex}
+.spin{width:44px;height:44px;border:4px solid var(--surface2);border-top-color:var(--rose);border-radius:50%;animation:spin .8s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:.95rem;color:var(--text2);font-weight:500;letter-spacing:.02em}
 
-    /* ========== 3. 匹配大厅（方格陈列）========== */
-    .page-lobby h2, .page-profile h2 { text-align: center; margin-bottom: 24px; font-size: 1.35rem; font-weight: 700; color: var(--text); }
-    .lobby h2 { margin-bottom: 20px; }
-    .lobby-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
-    .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .room-card {
-      background: var(--card);
-      border-radius: var(--radius-sm);
-      box-shadow: var(--shadow);
-      padding: 16px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      border: 1px solid var(--card-border);
-    }
-    .room-card:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.06); border-color: rgba(190, 24, 93, .35); }
-    .room-card .room-code { font-size: 1.25rem; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
-    .room-card .room-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
-    .room-card .room-status { font-size: 0.75rem; color: #22c55e; }
-    .room-card .room-status.waiting { color: #f59e0b; }
-    .lobby-section { background: var(--card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--card-border); }
-    .lobby-section h3 { margin: 0 0 12px; font-size: 1rem; font-weight: 600; color: var(--text); }
-    .room-input-wrap { display: flex; gap: 12px; margin-top: 12px; }
-    .room-input-wrap input { flex: 1; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); font-size: 1.05rem; letter-spacing: 0.15em; text-align: center; max-width: 160px; }
-    .room-input-wrap input:focus { outline: none; border-color: var(--blue); }
-    .btn-room { padding: 12px 20px; background: var(--blue); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; }
-    .btn-auto { display: block; width: 100%; margin-top: 12px; padding: 16px; background: linear-gradient(135deg, #f59e0b, #ea580c); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 700; cursor: pointer; }
-    .public-screen { margin-top: 16px; height: 140px; overflow-y: auto; padding: 12px; background: #f8fafc; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--muted); }
-    .public-screen .item { padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+#toasts{position:fixed;top:24px;right:24px;z-index:10001;display:flex;flex-direction:column;gap:12px;pointer-events:none}
+.toast{
+  pointer-events:auto;padding:14px 20px;
+  background:var(--surface);border-radius:var(--r);
+  box-shadow:0 8px 32px rgba(0,0,0,.08);
+  font-size:.9rem;color:var(--text);font-weight:500;
+  animation:toastIn .4s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;gap:12px;
+  border-left:4px solid transparent
+}
+.toast.ok{border-left-color:var(--green)}
+.toast.err{border-left-color:var(--rose)}
+.toast .dot{display:none} /* 简化 */
+@keyframes toastIn{from{opacity:0;transform:translateX(60px)}}
 
-    /* ========== 4. 虚拟相亲间 ========== */
-    .room-header h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); }
-    .room-2d { position: relative; min-height: 420px; background: linear-gradient(180deg, #fefce8 0%, #fef9c3 25%, #fefce8 100%); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--card-border); }
-    .c位区 { display: flex; justify-content: center; gap: 40px; align-items: flex-end; padding: 20px 0 30px; }
-    .c位区 .avatar-seat { width: 100px; text-align: center; }
-    .c位区 .avatar-seat .avatar-img { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(145deg, #fef3f8, #eff6ff); margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 0; overflow: hidden; border: 2px solid var(--card-border); }
-    .c位区 .avatar-seat .avatar-img .seat-placeholder { width: 100%; height: 100%; object-fit: contain; padding: 10%; }
-    .c位区 .avatar-seat .avatar-img img:not(.seat-placeholder) { width: 100%; height: 100%; object-fit: cover; }
-    .c位区 .avatar-seat .name { font-size: 0.9rem; font-weight: 600; }
-    .room-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-    .room-actions button { padding: 10px 18px; background: #fff; border: 2px solid #e2e8f0; border-radius: var(--radius-sm); font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
-    .room-actions button:hover { border-color: var(--pink); background: #fdf2f8; }
-    .room-actions button.tui { background: #fef2f2; border-color: var(--red); color: var(--red); }
-    .room-actions button.exit-room { background: #f1f5f9; border-color: var(--muted); color: var(--muted); }
-    .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .长辈区 { display: flex; justify-content: space-between; margin-top: 24px; }
-    .长辈区 .side { display: flex; gap: 12px; align-items: flex-start; }
-    .长辈区 .side .parent-card { width: 76px; text-align: center; padding: 12px; background: rgba(255,255,255,.92); border-radius: var(--radius-sm); border: 1px solid var(--card-border); box-shadow: var(--shadow-soft); }
-    .长辈区 .side .parent-card .head { width: 48px; height: 48px; border-radius: 50%; background: #f1f5f9; margin: 0 auto 6px; font-size: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .长辈区 .side .parent-card .head .parent-placeholder { width: 100%; height: 100%; object-fit: contain; padding: 6%; display: block; }
-    .长辈区 .side .parent-card .bubble { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
-    .chat-log-room { max-height: 200px; overflow-y: auto; margin-top: 20px; padding: 12px; background: rgba(255,255,255,.6); border-radius: var(--radius-sm); font-size: 0.9rem; }
-    .chat-log-room .msg { margin-bottom: 10px; }
-    .chat-log-room .msg .typing-cursor { display: inline-block; width: 2px; height: 1em; background: var(--red); margin-left: 2px; vertical-align: -2px; animation: blink 0.8s step-end infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-    .tui-popup { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; z-index: 100; }
-    .tui-popup.show { display: flex; }
-    .tui-popup .box { background: #fff; padding: 32px; border-radius: var(--radius); text-align: center; animation: tuiBounce 0.5s ease; }
-    @keyframes tuiBounce { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-    .tui-popup .emoji, .tui-popup .tui-illus { margin-bottom: 12px; }
-    .tui-popup .tui-illus { width: 80px; height: 80px; margin: 0 auto; object-fit: contain; }
-    .tui-popup .word { font-size: 1.8rem; font-weight: 800; color: var(--red); letter-spacing: 0.2em; }
+/* ============================================================
+   通用组件
+============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 28px;border:none;border-radius:var(--r);
+  font-size:1rem;font-weight:700;transition:var(--tr);
+  position:relative;overflow:hidden
+}
+/* 红色主按钮：渐变红粉 */
+.btn-primary{
+  background:linear-gradient(135deg,var(--rose),var(--pink));
+  color:#fff;
+  box-shadow:0 4px 16px rgba(225,29,72,.25)
+}
+.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(225,29,72,.35)
+}
+.btn-primary:active{transform:scale(.98)}
 
-    /* ========== 5. 结算页 ========== */
-    .result-page { text-align: center; padding-top: 40px; }
-    .result-page h2 { font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 28px; }
-    .result-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; max-width: 480px; margin: 0 auto 28px; }
-    .result-buttons button { flex: 1; min-width: 180px; padding: 20px 18px; border: none; border-radius: var(--radius); font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-    .result-buttons .btn-ok { background: linear-gradient(135deg, #15803d, #166534); color: #fff; box-shadow: 0 2px 8px rgba(21, 128, 61, .25); }
-    .result-buttons .btn-no { background: #fff; color: var(--text); border: 1px solid var(--card-border); box-shadow: var(--shadow-soft); }
-    .result-buttons button:hover { transform: translateY(-1px); }
-    .result-feedback { display: none; margin-top: 24px; padding: 28px 24px; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--card-border); max-width: 400px; margin-left: auto; margin-right: auto; }
-    .result-feedback .result-illus { width: 72px; height: 72px; margin: 0 auto 16px; object-fit: contain; display: block; }
-    .result-feedback p { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--text); }
-    .result-feedback.show { display: block; }
+/* 金色按钮 */
+.btn-gold{
+  background:linear-gradient(135deg,#f59e0b,#fbbf24);
+  color:#fff;
+  box-shadow:0 4px 16px rgba(245,158,11,.25)
+}
+.btn-gold:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(245,158,11,.35)
+}
+
+/* 描边按钮 */
+.btn-outline{
+  background:var(--surface);border:2px solid var(--bg2);color:var(--text2)
+}
+.btn-outline:hover{
+  border-color:var(--rose);color:var(--rose);background:var(--surface2)
+}
+
+/* 幽灵按钮（返回等） */
+.btn-ghost{
+  background:transparent;border:none;color:var(--text2);padding:10px 18px;font-size:.9rem;font-weight:500
+}
+.btn-ghost:hover{background:var(--bg2);color:var(--text)}
+
+/* 绿色成功按钮 */
+.btn-green{
+  background:linear-gradient(135deg,#10b981,#34d399);color:#fff;
+  box-shadow:0 4px 16px rgba(16,185,129,.25)
+}
+.btn-green:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,185,129,.35)}
+
+/* 卡片容器 */
+.card{
+  background:var(--surface);border-radius:var(--r-lg);padding:24px;
+  box-shadow:var(--shadow);border:1px solid var(--bg2);
+  transition:var(--tr)
+}
+.card:hover{
+  box-shadow:0 12px 40px rgba(225,29,72,.08);transform:translateY(-2px);border-color:var(--surface2)
+}
+
+/* 标签 Badge */
+.badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:.75rem;font-weight:700;letter-spacing:.02em}
+.badge-pink{background:#fff1f2;color:var(--rose)}
+.badge-gold{background:#fffbeb;color:var(--gold)}
+.badge-green{background:#ecfdf5;color:var(--green)}
+.badge-purple{background:#f5f3ff;color:var(--purple)}
+
+.section-title{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* ============================================================
+   1. 首页 — 月老加班中
+============================================================ */
+.home{text-align:center;display:flex;flex-direction:column;align-items:center}
+.home-badge{margin-bottom:20px}
+.home-title{font-size:2.4rem;font-weight:900;line-height:1.2;margin-bottom:12px;color:var(--text)}
+.home-title .grad{
+  background:linear-gradient(135deg,var(--rose) 0%,var(--gold) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text
+}
+.home-sub{font-size:1.05rem;color:var(--text2);margin-bottom:40px;font-weight:500}
+
+/* 月老场景 */
+.yuelao-scene{position:relative;width:100%;max-width:420px;margin:0 auto 40px;min-height:340px}
+.yuelao-desk{display:flex;align-items:flex-end;justify-content:center;min-height:260px;position:relative}
+.yuelao-img{
+  width:200px;height:auto;max-height:240px;object-fit:contain;
+  filter:drop-shadow(0 12px 24px rgba(225,29,72,.1));
+  animation:float 4s ease-in-out infinite;
+  position:relative;z-index:2
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* 红线团光晕 */
+.yarn-pile{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  width:220px;height:60px;
+  background:radial-gradient(ellipse,rgba(244,63,94,.15) 0%,transparent 70%);
+  border-radius:50%;z-index:1
+}
+
+/* 气泡 - 白底红框更清晰 */
+.scene-bubbles{position:absolute;inset:0;pointer-events:none;z-index:3}
+.sb{
+  position:absolute;background:#fff;
+  border:2px solid var(--bg2);border-radius:16px;
+  padding:12px 18px;font-size:.9rem;font-weight:600;color:var(--text);
+  white-space:nowrap;opacity:0;
+  box-shadow:0 4px 16px rgba(0,0,0,.05);
+  animation:sbPop .5s cubic-bezier(.34,1.56,.64,1) forwards
+}
+.sb::after{content:'';position:absolute;width:10px;height:10px;background:#fff;border-bottom:2px solid var(--bg2);border-right:2px solid var(--bg2);transform:rotate(45deg)}
+
+.sb-1{top:20px;left:0;animation-delay:.2s}
+.sb-1::after{bottom:-6px;left:24px}
+.sb-2{top:60px;right:-10px;animation-delay:.4s}
+.sb-2::after{bottom:-6px;right:24px}
+.sb-3{bottom:80px;left:-10px;animation-delay:.6s}
+.sb-3::after{top:50%;right:-6px;transform:translateY(-50%) rotate(-45deg)}
+/* 第四个气泡金色强调 */
+.sb-4{
+  bottom:30px;right:-10px;
+  background:#fffbeb;border-color:#fde68a;color:var(--gold);
+  animation-delay:.8s
+}
+.sb-4::after{background:#fffbeb;border-color:#fde68a;top:50%;left:-6px;transform:translateY(-50%) rotate(135deg)}
+
+@keyframes sbPop{from{opacity:0;transform:scale(.5) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+.home .btn-primary{padding:20px 64px;font-size:1.2rem;border-radius:99px;margin-bottom:16px}
+.sync-hint{font-size:.9rem;color:var(--text3);margin-top:8px}
+.sync-hint.syncing{color:var(--rose);font-weight:600}
+.home-skip{margin-top:32px}
+.home-skip a{font-size:.9rem;color:var(--text2);border-bottom:1px dashed var(--text3);padding-bottom:2px}
+.home-skip a:hover{color:var(--rose);border-color:var(--rose)}
+
+/* ============================================================
+   2. 个人档案页 — 分身确认
+============================================================ */
+.profile-header{text-align:center;margin-bottom:32px}
+.profile-header h2{font-size:1.5rem;font-weight:800;color:var(--text)}
+.profile-header p{font-size:.95rem;color:var(--text2);margin-top:6px}
+
+.profile-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:24px;align-items:start}
+@media(max-width:600px){.profile-grid{grid-template-columns:1fr}}
+
+.avatar-card{text-align:center;padding:32px 24px}
+.avatar-card .avatar-circle{
+  width:140px;height:140px;margin:0 auto 20px;border-radius:50%;
+  background:linear-gradient(145deg,#fff0f2,#fff);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border:4px solid #fff;box-shadow:0 0 0 2px var(--bg2);
+  cursor:pointer;transition:var(--tr);position:relative
+}
+.avatar-card .avatar-circle:hover{transform:scale(1.05);box-shadow:0 0 0 4px var(--rose)}
+.avatar-card .avatar-circle.bixin{animation:bixin .5s ease}
+@keyframes bixin{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.avatar-card .avatar-hint{font-size:.85rem;color:var(--text3);font-weight:500}
+
+.attr-card .attr-row{margin-bottom:20px}
+.attr-card .attr-label{font-size:.8rem;color:var(--text3);margin-bottom:6px;font-weight:700;letter-spacing:.05em}
+.attr-card .attr-value{font-size:1.1rem;font-weight:600;color:var(--text)}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.tag{
+  padding:6px 16px;background:var(--surface2);color:var(--rose);
+  border-radius:999px;font-size:.85rem;font-weight:600;transition:var(--tr)
+}
+.tag:hover{background:var(--rose);color:#fff}
+.family-slots{display:flex;gap:16px;margin-top:12px}
+.slot{
+  flex:1;height:80px;border:2px dashed var(--bg2);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--bg2);
+  cursor:pointer;transition:var(--tr);background:#fafafa
+}
+.slot:hover{border-color:var(--rose);color:var(--rose);background:#fff0f2}
+.slot.filled{border-style:solid;border-color:var(--green);color:var(--green);background:#ecfdf5}
+
+/* ============================================================
+   3. 匹配大厅 — 缘分连连看
+============================================================ */
+.lobby-hero{text-align:center;margin-bottom:32px;padding:20px;background:#fff;border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.lobby-hero h2{font-size:1.6rem;font-weight:900;margin-bottom:8px;color:var(--rose)}
+.lobby-hero p{font-size:1rem;color:var(--text2)}
+
+.room-input-row{
+  display:flex;gap:12px;margin-bottom:28px;align-items:center;
+  background:#fff;padding:8px;border-radius:var(--r);border:1px solid var(--bg2);box-shadow:var(--shadow)
+}
+.room-input-row input{
+  flex:1;max-width:120px;padding:12px;border:none;background:var(--bg);border-radius:12px;
+  color:var(--text);font-size:1.2rem;font-weight:700;letter-spacing:.1em;text-align:center;
+  font-family:inherit;transition:var(--tr)
+}
+.room-input-row input:focus{outline:none;background:#fff0f2;color:var(--rose)}
+.room-input-row .hint{font-size:.85rem;color:var(--text3);flex:1;padding-left:12px}
+
+/* NPC 人物卡片网格 */
+.npc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:32px}
+.npc-card{
+  background:#fff;border:2px solid var(--bg2);border-radius:var(--r-lg);
+  padding:0;cursor:pointer;transition:var(--tr);
+  position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)
+}
+.npc-card:hover{transform:translateY(-4px);box-shadow:var(--glow-pink);border-color:rgba(225,29,72,.2)}
+.npc-card-body{padding:20px}
+.npc-card-top{display:flex;gap:16px;align-items:center;margin-bottom:14px}
+.npc-avatar{
+  width:64px;height:64px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(145deg,#fff0f2,#fdf2f4);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border:3px solid #fff;box-shadow:0 4px 12px rgba(225,29,72,.1);
+  font-size:1.8rem
+}
+.npc-avatar img{width:100%;height:100%;object-fit:cover}
+.npc-info{flex:1;min-width:0}
+.npc-name{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.npc-desc{font-size:.82rem;color:var(--text2);font-weight:500}
+.npc-role-badge{
+  position:absolute;top:12px;right:12px;
+  padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:700
+}
+.npc-role-badge.male{background:#eff6ff;color:#3b82f6}
+.npc-role-badge.female{background:#fdf2f8;color:#ec4899}
+.npc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.npc-tags .ntag{
+  padding:4px 10px;background:var(--surface2);color:var(--rose);
+  border-radius:999px;font-size:.75rem;font-weight:600
+}
+.npc-expect{font-size:.82rem;color:var(--text3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.npc-card-btn{
+  display:block;width:100%;padding:14px;border:none;border-top:1px solid var(--bg2);
+  background:var(--surface2);color:var(--rose);font-size:.9rem;font-weight:700;
+  text-align:center;cursor:pointer;transition:var(--tr)
+}
+.npc-card-btn:hover{background:var(--rose);color:#fff}
+
+/* 自动匹配区 - 更炫酷 */
+.auto-match-card{
+  background:linear-gradient(135deg,#fff0f2 0%,#fffbeb 100%);
+  border:2px solid rgba(225,29,72,.1);border-radius:var(--r-lg);
+  padding:28px 24px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden
+}
+.auto-match-card::before{
+  content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;
+  background:radial-gradient(circle,rgba(245,158,11,.15),transparent 70%);border-radius:50%
+}
+.auto-match-card h3{font-size:1.15rem;font-weight:800;color:var(--text);margin-bottom:6px}
+.auto-match-card p{font-size:.88rem;color:var(--text2);margin-bottom:18px;line-height:1.6}
+.auto-match-card .btn-gold{padding:16px 48px;font-size:1.05rem;border-radius:99px}
+
+/* 匹配结果弹窗 */
+.match-reveal{
+  position:fixed;inset:0;background:rgba(255,249,247,.95);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:20px
+}
+.match-reveal.show{display:flex}
+.match-reveal-box{
+  background:#fff;border-radius:var(--r-xl);padding:40px 32px;text-align:center;
+  box-shadow:0 20px 60px rgba(225,29,72,.12);max-width:380px;width:90%;
+  animation:pageIn .5s cubic-bezier(.34,1.56,.64,1)
+}
+.match-reveal-avatar{
+  width:96px;height:96px;border-radius:50%;margin:0 auto 16px;
+  background:linear-gradient(145deg,#fff0f2,#fdf2f4);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border:4px solid #fff;box-shadow:0 8px 24px rgba(225,29,72,.15);font-size:2.5rem
+}
+.match-reveal-avatar img{width:100%;height:100%;object-fit:cover}
+.match-reveal-name{font-size:1.3rem;font-weight:900;color:var(--text);margin-bottom:4px}
+.match-reveal-desc{font-size:.9rem;color:var(--text2);margin-bottom:8px}
+.match-reveal-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:20px}
+.match-reveal-tags .ntag{padding:4px 12px;background:var(--surface2);color:var(--rose);border-radius:999px;font-size:.8rem;font-weight:600}
+.match-reveal-hint{font-size:.82rem;color:var(--text3);margin-bottom:16px}
+
+/* 公屏 - 气泡样式 */
+.public-screen{
+  margin-top:20px;max-height:160px;overflow-y:auto;padding:16px;
+  background:#fff;border-radius:var(--r);box-shadow:inset 0 2px 8px rgba(0,0,0,.02);
+  border:1px solid var(--bg2)
+}
+.public-screen .ps-item{
+  padding:8px 12px;margin-bottom:8px;border-radius:12px;
+  background:#fafafa;font-size:.85rem;color:var(--text2);
+  display:flex;align-items:center;gap:10px
+}
+.public-screen .ps-item:last-child{margin-bottom:0}
+.ps-item .ps-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+
+/* ============================================================
+   4. 虚拟相亲间
+============================================================ */
+.room-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.room-top h2{font-size:1.2rem;font-weight:800;color:var(--text)}
+
+.room-stage{
+  background:#fff;
+  border-radius:var(--r-xl);padding:32px 24px;position:relative;overflow:hidden;
+  box-shadow:var(--shadow);border:1px solid var(--bg2)
+}
+/* 顶部装饰 - 温馨灯光 */
+.room-stage::before{
+  content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:80px;
+  background:var(--gold);filter:blur(60px);opacity:.15;pointer-events:none
+}
+
+/* C位区 */
+.c-seats{display:flex;justify-content:center;gap:40px;padding:24px 0 32px;position:relative;z-index:1}
+.c-seat{text-align:center;width:110px}
+.c-seat .c-avatar{
+  width:96px;height:96px;border-radius:50%;margin:0 auto 12px;
+  background:#fff;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border:4px solid #fff;box-shadow:0 8px 24px rgba(0,0,0,.06);
+  transition:var(--tr)
+}
+.c-seat .c-avatar img{width:100%;height:100%;object-fit:cover}
+.c-seat .c-name{font-size:.95rem;font-weight:700;color:var(--text)}
+.c-seat .c-avatar:hover{transform:scale(1.05);box-shadow:0 12px 32px rgba(225,29,72,.15)}
+
+/* 操作按钮 */
+.room-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px 0;position:relative;z-index:1}
+.room-actions .btn{padding:10px 20px;font-size:.9rem;border-radius:99px;background:#fff;border:1px solid var(--bg2);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.room-actions .btn:hover{background:#fff0f2;color:var(--rose);border-color:var(--rose)}
+.btn-tui{background:linear-gradient(135deg,var(--rose),#f43f5e)!important;color:#fff!important;border:none!important;font-weight:700!important;box-shadow:0 4px 16px rgba(225,29,72,.3)!important}
+.btn-tui:hover{transform:scale(1.05)!important}
+
+/* 长辈区 */
+.elders{display:flex;justify-content:space-between;margin-top:28px;padding:0 12px;position:relative;z-index:1}
+.elder-side{display:flex;gap:12px}
+.elder-card{
+  width:88px;text-align:center;padding:12px 8px;
+  background:#fff;border-radius:var(--r);
+  box-shadow:0 4px 12px rgba(0,0,0,.04);transition:var(--tr)
+}
+.elder-card:hover{transform:translateY(-4px)}
+.elder-head{width:56px;height:56px;border-radius:50%;background:var(--bg);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.elder-head img{width:100%;height:100%;object-fit:cover}
+.elder-status{font-size:.7rem;color:var(--text2);margin-top:4px;font-weight:600}
+
+/* 聊天记录 - 对话泡风格 */
+.chat-log{
+  max-height:240px;overflow-y:auto;margin-top:24px;padding:16px;
+  background:#fafafa;border-radius:var(--r);font-size:.95rem;position:relative;z-index:1;
+  border:1px solid var(--bg2)
+}
+.chat-log .msg{
+  margin-bottom:12px;padding:12px 16px;background:#fff;border-radius:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.03);animation:msgIn .3s ease;
+  line-height:1.6
+}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}}
+.chat-log .msg strong{color:var(--rose);font-weight:700;margin-right:4px}
+.typing-cursor{display:inline-block;width:2px;height:1em;background:var(--rose);margin-left:2px;vertical-align:-2px;animation:blink .7s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* 退退退弹窗 */
+.tui-popup{position:fixed;inset:0;background:rgba(255,255,255,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}
+.tui-popup.show{display:flex}
+.tui-popup .tui-box{
+  background:#fff;border:4px solid var(--rose);padding:48px;border-radius:var(--r-xl);
+  text-align:center;box-shadow:0 20px 60px rgba(225,29,72,.2);
+  animation:tuiBounce .5s cubic-bezier(.34,1.56,.64,1)
+}
+@keyframes tuiBounce{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.tui-popup .tui-img{width:100px;height:100px;margin:0 auto 20px;object-fit:contain}
+.tui-popup .tui-word{font-size:2.4rem;font-weight:900;color:var(--rose);letter-spacing:.15em}
+
+/* ============================================================
+   5. 结算页 — 游戏通关
+============================================================ */
+.result{text-align:center;padding-top:48px}
+.result h2{font-size:1.8rem;font-weight:900;margin-bottom:12px;color:var(--text)}
+.result-desc{color:var(--text2);margin-bottom:48px;font-size:1.05rem}
+
+.result-choices{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;max-width:520px;margin:0 auto 40px}
+.result-choices .btn{flex:1;min-width:200px;padding:24px 20px;font-size:1.1rem;border-radius:var(--r-lg)}
+
+.result-feedback{
+  display:none;margin:28px auto 0;max-width:440px;padding:40px;text-align:center;
+  background:#fff;border-radius:var(--r-xl);box-shadow:var(--shadow);
+  animation:pageIn .4s ease
+}
+.result-feedback.show{display:block}
+.result-feedback .rf-img{
+  width:100px;height:100px;margin:0 auto 24px;object-fit:contain;
+  animation:rfBounce .6s cubic-bezier(.34,1.56,.64,1)
+}
+@keyframes rfBounce{0%{transform:scale(0) rotate(-180deg)}100%{transform:scale(1) rotate(0)}}
+.result-feedback p{font-size:1.1rem;line-height:1.7;color:var(--text);font-weight:500}
+
+/* ============================================================
+   滚动条美化
+============================================================ */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#d1d5db}
+
   </style>
 </head>
 <body>
-  <!-- 1. 首页：登录与身份同步 -->
-  <div class="page page-home active" id="page-home">
-    <h1 class="home-title">A2A 相亲</h1>
-    <p class="home-subtitle">过年回家，相亲不尴尬</p>
-    <div class="home-bubbles">
-      <div class="bubble">年底了，月老也要冲KPI</div>
-      <div class="bubble">牵完你的牵你的</div>
-      <div class="bubble">月老正在给红线打死结...</div>
-      <div class="bubble">目前前面还有 10086 位正在疯狂连线中</div>
+
+<!-- Loader -->
+<div id="loader"><div class="spin"></div><div class="loader-text">月老正在牵线...</div></div>
+<!-- Toasts -->
+<div id="toasts"></div>
+
+<!-- ========== 1. 首页 ========== -->
+<div class="page home active" id="page-home">
+  <div class="home-badge"><span class="badge badge-pink">月老加班中 🌙</span></div>
+  <h1 class="home-title"><span class="grad">A2A 相亲</span></h1>
+  <p class="home-sub">过年回家，相亲不尴尬 — 让 AI 先聊，缘分天注定</p>
+
+  <div class="yuelao-scene">
+    <div class="scene-bubbles">
+      <div class="sb sb-1">年底了，月老也要冲KPI</div>
+      <div class="sb sb-2">牵完你的牵你的</div>
+      <div class="sb sb-3">月老正在给红线打死结...</div>
+      <div class="sb sb-4">前面还有 10086 位正在疯狂连线中</div>
     </div>
-    <div class="yuelao-wrap">
-      <img class="yuelao-figure" id="yuelao-img" src="images/yuelao.png" alt="月老" onerror="this.style.display='none'; document.getElementById('yuelao-fallback').style.display='block';" />
-      <img class="yuelao-figure" id="yuelao-fallback" src="images/avatar-default.png" alt="月老" style="display:none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-      <span class="yuelao-figure img-fail" style="display:none;font-size:4rem;">🧑‍🦳</span>
+    <div class="yuelao-desk">
+      <div class="yarn-pile"></div>
+      <img class="yuelao-img" id="yuelao-img" src="images/yuelao.png" alt="月老"
+           onerror="this.src='images/avatar-default.png'; this.onerror=null;" />
     </div>
-    <a href="#" id="btn-secondme-login" class="btn-login-big">使用 SecondMe 授权登录</a>
-    <p class="sync-hint" id="sync-hint">登录后将同步：分身、职业、兴趣、MBTI...</p>
-    <p class="home-skip"><a href="#" id="link-skip-login">未登录？先逛逛匹配大厅</a></p>
   </div>
 
-  <!-- 2. 个人档案页 -->
-  <div class="page page-profile" id="page-profile">
-    <button type="button" class="btn-back" id="btn-back-from-profile">← 返回首页</button>
-    <h2 style="text-align:center;margin-bottom:24px;">分身确认</h2>
-    <div class="profile-layout">
-      <div class="avatar-zone">
-        <div class="avatar-box" id="my-avatar" title="点击比心"><img class="avatar-placeholder" src="images/avatar-default.png" alt=""></div>
-        <p>点击头像比心</p>
+  <a href="#" id="btn-secondme-login" class="btn btn-primary">使用 SecondMe 授权登录</a>
+  <p class="sync-hint" id="sync-hint">登录后将同步：分身、职业、兴趣、MBTI...</p>
+</div>
+
+<!-- ========== 2. 个人档案页 ========== -->
+<div class="page" id="page-profile">
+  <button type="button" class="btn btn-ghost" id="btn-back-from-profile">← 返回首页</button>
+  <div class="profile-header">
+    <h2>分身确认</h2>
+    <p>确认你的 AI 分身档案，然后进入匹配大厅</p>
+  </div>
+  <div class="profile-grid">
+    <div class="card avatar-card">
+      <div class="avatar-circle" id="my-avatar" title="点击比心">
+        <img src="images/avatar-default.png" alt="" />
       </div>
-      <div class="attr-card">
-        <h3>属性卡片</h3>
-        <div class="attr-row"><label>职业</label><span id="attr-job">—</span></div>
-        <div class="attr-row"><label>性格标签</label><div class="tags" id="attr-tags"></div></div>
-        <div class="attr-row"><label>亲友团席位</label></div>
+      <p class="avatar-hint">点击头像比心 💗</p>
+    </div>
+    <div class="card attr-card">
+      <div class="section-title">📋 属性卡片</div>
+      <div class="attr-row">
+        <div class="attr-label">职业</div>
+        <div class="attr-value" id="attr-job">—</div>
+      </div>
+      <div class="attr-row">
+        <div class="attr-label">性格标签</div>
+        <div class="tags" id="attr-tags"><span class="tag">待补充</span></div>
+      </div>
+      <div class="attr-row">
+        <div class="attr-label">亲友团席位</div>
         <div class="family-slots">
-          <div class="slot" id="slot1" title="点击邀请">+</div>
-          <div class="slot" id="slot2" title="点击邀请">+</div>
+          <div class="slot" id="slot1" title="邀请父母">+</div>
+          <div class="slot" id="slot2" title="邀请父母">+</div>
         </div>
-        <button type="button" class="btn-next" id="btn-to-lobby">确认，进入匹配大厅</button>
       </div>
+      <button type="button" class="btn btn-primary" id="btn-to-lobby" style="width:100%;margin-top:20px">确认，进入匹配大厅 →</button>
     </div>
   </div>
+</div>
 
-  <!-- 3. 匹配大厅 -->
-  <div class="page page-lobby lobby" id="page-lobby">
-    <button type="button" class="btn-back" id="btn-back-from-lobby">← 返回</button>
+<!-- ========== 3. 匹配大厅 ========== -->
+<div class="page" id="page-lobby">
+  <button type="button" class="btn btn-ghost" id="btn-back-from-lobby">← 返回</button>
+  <div class="lobby-hero">
     <h2>缘分连连看</h2>
-    <div class="lobby-toolbar">
-      <span style="font-size:0.9rem;color:var(--muted);">输入房间号快速进入</span>
-      <div class="room-input-wrap">
-        <input type="text" id="room-code" maxlength="4" placeholder="1234" />
-        <button type="button" class="btn-room" id="btn-enter-room">进入</button>
-      </div>
-    </div>
-    <div class="room-grid" id="room-grid"></div>
-    <div class="lobby-section">
-      <h3>全自动相亲托管</h3>
-      <button type="button" class="btn-auto" id="btn-auto-match">全自动相亲托管</button>
-    </div>
-    <div class="lobby-section">
-      <h3>大厅公屏</h3>
-      <div class="public-screen" id="public-screen">
-        <div class="item">恭喜王和李的 AI 牵手成功！</div>
-        <div class="item">赵**的 AI 刚刚因为「豆腐脑咸甜之争」掀桌了！</div>
-        <div class="item">孙**的 AI 与周**的 AI 正在聊人生理想…</div>
-        <div class="item">吴**的 AI 被家长满意度点满 👍👍👍👍</div>
-      </div>
-    </div>
+    <p>选一位心仪的对象，或让月老随机牵线</p>
   </div>
 
-  <!-- 4. A2A 虚拟相亲间 -->
-  <div class="page" id="page-room">
-    <div class="room-header">
-      <button type="button" class="btn-back exit-room" id="btn-exit-room">← 退出房间</button>
-      <h2 style="margin:0;font-size:1.2rem;">虚拟相亲间</h2>
-      <span style="width:80px;"></span>
-    </div>
-    <div class="room-2d">
-      <div class="c位区">
-        <div class="avatar-seat"><div class="avatar-img" id="room-male"><img class="seat-placeholder" src="images/avatar-male.png" alt=""></div><div class="name" id="room-male-name">男方</div></div>
-        <div class="avatar-seat"><div class="avatar-img" id="room-female"><img class="seat-placeholder" src="images/avatar-female.png" alt=""></div><div class="name" id="room-female-name">女方</div></div>
-      </div>
-      <div class="room-actions">
-        <button type="button" data-act="wave">挥手</button>
-        <button type="button" data-act="nod">点头</button>
-        <button type="button" data-act="heart">比心</button>
-        <button type="button" data-act="leave">尴尬离场</button>
-        <button type="button" class="tui" id="btn-tui">退退退</button>
-      </div>
-      <p style="text-align:center;margin-top:8px;"><button type="button" class="btn-back exit-room" id="btn-exit-room-bottom">← 退出房间</button></p>
-      <div class="长辈区">
-        <div class="side"><div class="parent-card"><div class="head"><img class="parent-placeholder" src="images/parent-family.png" alt=""></div><div class="bubble">满意度：👍👍👍👍</div></div></div>
-        <div class="side"><div class="parent-card"><div class="head"><img class="parent-placeholder" src="images/parent-family.png" alt=""></div><div class="bubble">正在组织语言</div></div></div>
-      </div>
-      <div class="chat-log-room" id="chat-log-room"></div>
-    </div>
-    <div class="tui-popup" id="tui-popup">
-      <div class="box"><img class="tui-illus" src="images/tui.png" alt=""><div class="word">退！退！退！</div></div>
-    </div>
+  <!-- 全自动匹配区 -->
+  <div class="auto-match-card">
+    <h3>🎯 月老随机牵线</h3>
+    <p>不想纠结？让月老从大厅里随机给你挑一个，AI 分身全程自动对话，坐等结果就行！</p>
+    <button type="button" class="btn btn-gold" id="btn-auto-match">✨ 全自动相亲托管</button>
   </div>
 
-  <!-- 5. 评价与结算 -->
-  <div class="page result-page" id="page-result">
-    <button type="button" class="btn-back" id="btn-back-from-result" style="margin-left:auto;margin-right:auto;display:block;">← 返回大厅</button>
-    <h2>相亲结算</h2>
-    <div class="result-buttons">
-      <button type="button" class="btn-ok" id="btn-result-ok">天作之合，牵手成功</button>
-      <button type="button" class="btn-no" id="btn-result-no">分身不合，江湖再见</button>
-    </div>
-    <div class="result-feedback" id="result-success">
-      <img class="result-illus" src="images/result-success.png" alt="">
-      <p>恭喜！缘分已牵好，记得线下见面哦～</p>
-    </div>
-    <div class="result-feedback" id="result-reject">
-      <img class="result-illus" src="images/result-bye.png" alt="">
-      <p>没关系，下一个会更好！</p>
-    </div>
+  <!-- 指定房间号入口 -->
+  <div class="room-input-row">
+    <input type="text" id="room-code" maxlength="4" placeholder="1234" pattern="\d{4}" />
+    <button type="button" class="btn btn-primary" id="btn-enter-room">进入房间</button>
+    <span class="hint">有房间号？直接碰头</span>
   </div>
 
-  <script>
-    const API_BASE = '';
-    let authSessionId = null;
-    let myProfile = null;
+  <!-- NPC 人物卡片列表 -->
+  <div class="section-title" style="margin-top:8px">👥 大厅嘉宾</div>
+  <div class="npc-grid" id="npc-grid">
+    <div style="text-align:center;padding:40px;color:var(--text3)">加载中...</div>
+  </div>
 
-    function showPage(id) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      const el = document.getElementById(id);
-      if (el) el.classList.add('active');
-    }
+  <!-- 公屏 -->
+  <div class="card">
+    <div class="section-title">📢 大厅动态</div>
+    <div class="public-screen" id="public-screen">
+      <div class="ps-item"><span class="ps-dot"></span>恭喜 Alex 和 Luna 的 AI 聊得火热！</div>
+      <div class="ps-item"><span class="ps-dot" style="background:var(--gold)"></span>赵甜甜的 AI 因为「豆腐脑咸甜之争」掀桌了！</div>
+      <div class="ps-item"><span class="ps-dot"></span>林小溪的 AI 正在和陈默的 AI 聊人生理想…</div>
+      <div class="ps-item"><span class="ps-dot" style="background:var(--cyan)"></span>王大壮的家长满意度拉满 👍👍👍</div>
+    </div>
+  </div>
+</div>
 
-    function getLoginUrl() {
-      return (API_BASE || '') + '/api/auth/secondme/login?redirect_path=' + encodeURIComponent('/');
-    }
+<!-- 匹配结果弹窗 -->
+<div class="match-reveal" id="match-reveal">
+  <div class="match-reveal-box">
+    <div class="match-reveal-avatar" id="mr-avatar">💘</div>
+    <div class="match-reveal-name" id="mr-name">匹配中...</div>
+    <div class="match-reveal-desc" id="mr-desc"></div>
+    <div class="match-reveal-tags" id="mr-tags"></div>
+    <div class="match-reveal-hint">月老已安排好相亲间，AI 正在开始对话...</div>
+    <button type="button" class="btn btn-primary" id="mr-go" style="width:100%;border-radius:99px">进入相亲间 →</button>
+  </div>
+</div>
 
-    // 首页：SecondMe 登录
-    document.getElementById('btn-secondme-login').href = getLoginUrl();
-    document.getElementById('btn-secondme-login').addEventListener('click', function(e) {
-      const url = getLoginUrl();
-      if (url.startsWith('http')) e.preventDefault();
-      else return;
-      window.location.href = url;
+<!-- ========== 4. 虚拟相亲间 ========== -->
+<div class="page" id="page-room">
+  <div class="room-top">
+    <button type="button" class="btn btn-ghost" id="btn-exit-room">← 退出房间</button>
+    <h2>虚拟相亲间</h2>
+    <span style="width:100px"></span>
+  </div>
+
+  <div class="room-stage">
+    <div class="c-seats">
+      <div class="c-seat">
+        <div class="c-avatar" id="room-male"><img src="images/avatar-male.png" alt="" /></div>
+        <div class="c-name" id="room-male-name">男方</div>
+      </div>
+      <div class="c-seat">
+        <div class="c-avatar" id="room-female"><img src="images/avatar-female.png" alt="" /></div>
+        <div class="c-name" id="room-female-name">女方</div>
+      </div>
+    </div>
+
+    <div class="room-actions">
+      <button type="button" class="btn btn-outline" data-act="wave">👋 挥手</button>
+      <button type="button" class="btn btn-outline" data-act="nod">😊 点头</button>
+      <button type="button" class="btn btn-outline" data-act="heart">💗 比心</button>
+      <button type="button" class="btn btn-outline" data-act="leave">😅 尴尬离场</button>
+      <button type="button" class="btn btn-tui" id="btn-tui">🙅 退退退</button>
+    </div>
+
+    <div style="text-align:center;margin-top:8px">
+      <button type="button" class="btn btn-ghost" id="btn-exit-room-bottom">← 退出房间</button>
+    </div>
+
+    <div class="elders">
+      <div class="elder-side">
+        <div class="elder-card">
+          <div class="elder-head"><img src="images/parent-family.png" alt="" /></div>
+          <div class="elder-status badge badge-green" style="font-size:.65rem">满意度 👍×4</div>
+        </div>
+      </div>
+      <div class="elder-side">
+        <div class="elder-card">
+          <div class="elder-head"><img src="images/parent-family.png" alt="" /></div>
+          <div class="elder-status badge badge-gold" style="font-size:.65rem">正在组织语言</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-log" id="chat-log-room"></div>
+  </div>
+
+  <div class="tui-popup" id="tui-popup">
+    <div class="tui-box">
+      <img class="tui-img" src="images/tui.png" alt=""
+           onerror="this.style.display='none';" />
+      <div class="tui-word">退！退！退！</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 5. 评价与结算 ========== -->
+<div class="page result" id="page-result">
+  <button type="button" class="btn btn-ghost" id="btn-back-from-result" style="display:block;margin:0 auto 16px">← 返回大厅</button>
+  <h2>相亲结算</h2>
+  <p style="color:var(--text2);margin-bottom:32px;font-size:.95rem" class="result-desc">本次相亲已结束，请做出你的选择</p>
+  <div class="result-choices">
+    <button type="button" class="btn btn-green" id="btn-result-ok">💕 天作之合，牵手成功</button>
+    <button type="button" class="btn btn-outline" id="btn-result-no">👋 分身不合，江湖再见</button>
+  </div>
+  <div class="result-feedback card" id="result-success">
+    <img class="rf-img" src="images/result-success.png" alt="" onerror="this.style.display='none'" />
+    <p>🎉 恭喜！缘分已牵好，记得线下见面哦～<br/>月老正在往你的红线上打双份结！</p>
+  </div>
+  <div class="result-feedback card" id="result-reject">
+    <img class="rf-img" src="images/result-bye.png" alt="" onerror="this.style.display='none'" />
+    <p>没关系，下一个会更好！<br/>月老已把红线回收利用，环保♻️</p>
+  </div>
+</div>
+
+<!-- ========== JavaScript ========== -->
+<script>
+const API_BASE = '';
+let authSessionId = null;
+let myProfile = null;
+
+/* ---- 工具函数 ---- */
+function showLoader(text) {
+  const el = document.getElementById('loader');
+  if (text) el.querySelector('.loader-text').textContent = text;
+  el.classList.add('show');
+}
+function hideLoader() {
+  const el = document.getElementById('loader');
+  el.style.opacity = '0';
+  setTimeout(() => { el.classList.remove('show'); el.style.opacity = '1'; }, 250);
+}
+function toast(msg, type) {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || 'ok');
+  t.innerHTML = '<span class="dot"></span>' + msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(60px)'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function getLoginUrl() {
+  return (API_BASE || '') + '/api/auth/secondme/login?redirect_path=' + encodeURIComponent('/');
+}
+
+/* ---- 1. 首页 ---- */
+document.getElementById('btn-secondme-login').href = getLoginUrl();
+document.getElementById('btn-secondme-login').addEventListener('click', function(e) {
+  e.preventDefault();
+  showLoader('正在跳转 SecondMe...');
+  setTimeout(() => { window.location.href = getLoginUrl(); }, 300);
+});
+/* 未登录不能进入大厅（已移除"先逛逛"入口） */
+
+/* ---- 2. 登录回调 ---- */
+(function initAuth() {
+  const params = new URLSearchParams(window.location.search);
+  const session = params.get('session');
+  const error = params.get('error');
+  const hint = document.getElementById('sync-hint');
+  if (error) {
+    if (hint) hint.textContent = '登录失败：' + (error === 'missing_code' ? '未收到授权码' : error === 'token_failed' ? 'Token 交换失败' : error === 'no_token' ? '未获取到 Token' : error);
+    return;
+  }
+  const doFetch = (sid) => {
+    if (sid) authSessionId = sid;
+    if (hint && session) { hint.textContent = '正在抓取你的分身、职业、兴趣、MBTI...'; hint.classList.add('syncing'); }
+    var url = API_BASE + '/api/auth/me';
+    if (sid) url += '?session_id=' + encodeURIComponent(sid);
+    fetch(url, { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.logged_in && data.profile) {
+          myProfile = data;
+          if (hint) hint.textContent = '同步完成！';
+          fillProfilePage(data);
+          hideLoader();
+          setTimeout(() => { showPage('page-profile'); toast('登录成功，分身已同步！'); }, session ? 600 : 0);
+        } else if (hint && session) {
+          hint.textContent = '同步失败，请重试'; hint.classList.remove('syncing');
+        }
+        if (params.has('session')) try { window.history.replaceState({}, '', window.location.pathname || '/'); } catch(_) {}
+      })
+      .catch(() => { if (hint) { hint.textContent = '网络异常，请重试'; hint.classList.remove('syncing'); } });
+  };
+  if (session) doFetch(session); else doFetch();
+})();
+
+function fillProfilePage(data) {
+  const p = data.profile || {};
+  const jobEl = document.getElementById('attr-job');
+  if (jobEl) jobEl.textContent = p.occupation || '—';
+  const tagsEl = document.getElementById('attr-tags');
+  if (tagsEl) {
+    const tags = (p.hobbies || '').split(/[,，、]/).filter(Boolean).slice(0, 6);
+    tagsEl.innerHTML = tags.length ? tags.map(t => '<span class="tag">' + t.trim() + '</span>').join('') : '<span class="tag">待补充</span>';
+  }
+  const box = document.getElementById('my-avatar');
+  if (box) {
+    const url = data.avatar_url || p.avatar_url;
+    if (url) box.querySelector('img').src = url;
+  }
+}
+
+/* ---- 3. 档案页交互 ---- */
+document.getElementById('my-avatar').addEventListener('click', function() {
+  this.classList.add('bixin');
+  setTimeout(() => this.classList.remove('bixin'), 500);
+});
+document.getElementById('btn-to-lobby').addEventListener('click', function() {
+  showLoader('正在进入大厅...');
+  setTimeout(() => { showPage('page-lobby'); fetchLobby(); hideLoader(); }, 300);
+});
+document.getElementById('btn-back-from-profile').addEventListener('click', () => showPage('page-home'));
+document.getElementById('btn-back-from-lobby').addEventListener('click', () => showPage(myProfile ? 'page-profile' : 'page-home'));
+document.getElementById('btn-back-from-result').addEventListener('click', () => { showPage('page-lobby'); fetchLobby(); });
+document.getElementById('slot1').addEventListener('click', function() { this.classList.toggle('filled'); this.textContent = this.classList.contains('filled') ? '✓ 已邀请' : '+'; });
+document.getElementById('slot2').addEventListener('click', function() { this.classList.toggle('filled'); this.textContent = this.classList.contains('filled') ? '✓ 已邀请' : '+'; });
+
+/* ---- 4. 大厅 —— 从 API 加载 NPC 列表 ---- */
+var lobbyNpcs = [];
+var defaultAvatars = { male: '🧑', female: '👩' };
+
+function escapeAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function renderNpcGrid() {
+  var el = document.getElementById('npc-grid');
+  if (!el) return;
+  if (!lobbyNpcs.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">暂无嘉宾</div>';
+    return;
+  }
+  el.innerHTML = lobbyNpcs.map(function(n, i) {
+    var hobbies = (n.hobbies||'').split(/[,，、]/).filter(Boolean).slice(0,4);
+    var avatarHtml = n.avatar_url
+      ? '<img src="' + escapeAttr(n.avatar_url) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + (n.role==='male'?'🧑':'👩') + '\'" />'
+      : (n.role === 'male' ? '🧑' : '👩');
+    var tagHtml = hobbies.map(function(t){ return '<span class="ntag">' + escapeAttr(t.trim()) + '</span>'; }).join('');
+    return '<div class="npc-card" data-npc-id="' + escapeAttr(n.id) + '" style="animation:pageIn .35s ease '+(i*.06)+'s both">' +
+      '<span class="npc-role-badge ' + n.role + '">' + (n.role==='male'?'♂ 男嘉宾':'♀ 女嘉宾') + '</span>' +
+      '<div class="npc-card-body">' +
+        '<div class="npc-card-top">' +
+          '<div class="npc-avatar">' + avatarHtml + '</div>' +
+          '<div class="npc-info"><div class="npc-name">' + escapeAttr(n.display_name) + '</div>' +
+          '<div class="npc-desc">' + escapeAttr(n.desc || (n.age+'岁 · '+n.occupation)) + '</div></div>' +
+        '</div>' +
+        '<div class="npc-tags">' + tagHtml + '</div>' +
+        (n.expectation ? '<div class="npc-expect">💬 ' + escapeAttr(n.expectation) + '</div>' : '') +
+      '</div>' +
+      '<div class="npc-card-btn">选 TA 相亲 →</div>' +
+    '</div>';
+  }).join('');
+
+  el.querySelectorAll('.npc-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      var npcId = this.dataset.npcId;
+      var npc = lobbyNpcs.find(function(n){ return n.id === npcId; });
+      if (npc) startMatchWithNpc(npc);
     });
-    document.getElementById('link-skip-login').addEventListener('click', function(e) { e.preventDefault(); showPage('page-lobby'); });
+  });
+}
 
-    // 回调或已有 Cookie 时检查登录态并拉取档案
-    (function initAuth() {
-      const params = new URLSearchParams(window.location.search);
-      const session = params.get('session');
-      const error = params.get('error');
-      const hint = document.getElementById('sync-hint');
-      if (error) {
-        if (hint) hint.textContent = '登录失败：' + (error === 'missing_code' ? '未收到授权码' : error === 'token_failed' ? 'Token 交换失败' : error === 'no_token' ? '未获取到 Token' : error);
-        return;
-      }
-      const doFetch = (sid) => {
-        if (sid) authSessionId = sid;
-        if (hint && session) { hint.textContent = '正在抓取你的分身、职业、兴趣、MBTI...'; hint.classList.add('syncing'); }
-        var url = API_BASE + '/api/auth/me';
-        if (sid) url += '?session_id=' + encodeURIComponent(sid);
-        fetch(url, { credentials: 'include' })
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data.logged_in && data.profile) {
-              myProfile = data;
-              if (hint) hint.textContent = '同步完成！';
-              setTimeout(function() { showPage('page-profile'); }, session ? 800 : 0);
-              fillProfilePage(data);
-            } else if (hint && session) {
-              hint.textContent = '同步失败，请重试';
-              hint.classList.remove('syncing');
-            }
-            if (params.has('session')) try { window.history.replaceState({}, '', window.location.pathname || '/'); } catch(_) {}
-          })
-          .catch(function() {
-            if (hint) { hint.textContent = '网络异常，请重试'; hint.classList.remove('syncing'); }
-          });
-      };
-      if (session) doFetch(session);
-      else doFetch();
+function fetchLobby() {
+  fetch(API_BASE + '/api/dating/lobby')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      lobbyNpcs = d.users || [];
+      renderNpcGrid();
+    })
+    .catch(function(){ toast('加载大厅失败', 'err'); });
+}
+
+/* 选择指定 NPC 相亲 */
+function startMatchWithNpc(npc) {
+  showLoader('月老正在安排相亲间...');
+  var payload = buildSessionPayload();
+  // 根据 NPC 性别设置对手档案
+  if (npc.role === 'female') {
+    payload.female = { display_name: npc.display_name, occupation: npc.occupation||'', hobbies: npc.hobbies||'', extra: npc.extra||'' };
+  } else {
+    payload.male = { display_name: npc.display_name, occupation: npc.occupation||'', hobbies: npc.hobbies||'', extra: npc.extra||'' };
+  }
+  payload.target_user_id = npc.id;
+  fetch(API_BASE + '/api/dating/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      hideLoader();
+      enterRoom(d.session_id, payload);
+    })
+    .catch(function(err){ hideLoader(); toast('创建失败：'+(err.message||'网络异常'), 'err'); });
+}
+
+/* 全自动随机匹配 */
+document.getElementById('btn-auto-match').addEventListener('click', function() {
+  showLoader('月老正在翻红线簿...');
+  var payload = buildSessionPayload();
+  fetch(API_BASE + '/api/dating/auto-match', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    .then(function(r){ if(!r.ok) throw new Error('匹配失败'); return r.json(); })
+    .then(function(d){
+      hideLoader();
+      // 展示匹配结果弹窗
+      var npc = d.matched_npc || {};
+      showMatchReveal(npc, d.session_id, payload);
+    })
+    .catch(function(err){ hideLoader(); toast('匹配失败：'+(err.message||'暂无合适对象'), 'err'); });
+});
+
+function showMatchReveal(npc, sessionId, payload) {
+  var reveal = document.getElementById('match-reveal');
+  var avatarEl = document.getElementById('mr-avatar');
+  var nameEl = document.getElementById('mr-name');
+  var descEl = document.getElementById('mr-desc');
+  var tagsEl = document.getElementById('mr-tags');
+  nameEl.textContent = npc.display_name || '神秘嘉宾';
+  descEl.textContent = (npc.age ? npc.age+'岁 · ' : '') + (npc.occupation || '');
+  var hobbies = (npc.hobbies||'').split(/[,，、]/).filter(Boolean).slice(0,5);
+  tagsEl.innerHTML = hobbies.map(function(t){ return '<span class="ntag">' + escapeAttr(t.trim()) + '</span>'; }).join('');
+  if (npc.avatar_url) {
+    avatarEl.innerHTML = '<img src="' + escapeAttr(npc.avatar_url) + '" alt="" style="width:100%;height:100%;object-fit:cover" />';
+  } else {
+    avatarEl.textContent = npc.role === 'male' ? '🧑' : '💘';
+  }
+  reveal.classList.add('show');
+  // "进入相亲间" 按钮
+  var goBtn = document.getElementById('mr-go');
+  goBtn.onclick = function() {
+    reveal.classList.remove('show');
+    enterRoom(sessionId, payload, npc);
+  };
+}
+
+/* 房间号入口 */
+document.getElementById('btn-enter-room').addEventListener('click', function() {
+  var code = (document.getElementById('room-code').value || '').trim();
+  if (!/^\d{4}$/.test(code)) { toast('请输入 4 位数字房间号', 'err'); return; }
+  createManualSession(code);
+});
+
+function createManualSession(roomCode) {
+  showLoader('月老正在分配红线...');
+  var payload = buildSessionPayload();
+  fetch(API_BASE + '/api/dating/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      hideLoader();
+      enterRoom(d.session_id, payload);
+    })
+    .catch(function(err){ hideLoader(); toast('创建失败：'+(err.message||'网络异常'), 'err'); });
+}
+
+/* 通用：构建 session payload */
+function buildSessionPayload() {
+  var p = {
+    male: myProfile && myProfile.profile
+      ? { display_name: myProfile.name || myProfile.profile.display_name, occupation: myProfile.profile.occupation||'', hobbies: myProfile.profile.hobbies||'', extra: myProfile.profile.extra||'' }
+      : { display_name: '我' },
+    female: { display_name: '女方' },
+    male_parent: { display_name: '我的家长' },
+    female_parent: { display_name: '女方家长' },
+    max_rounds: 6
+  };
+  if (authSessionId) p.secondme_male_session_id = authSessionId;
+  return p;
+}
+
+/* 通用：进入相亲间 */
+function enterRoom(sessionId, payload, matchedNpc) {
+  showPage('page-room');
+  var myName = (payload.male && payload.male.display_name) || '我';
+  var otherName = matchedNpc ? matchedNpc.display_name : ((payload.female && payload.female.display_name) || '对方');
+  document.getElementById('room-male-name').textContent = myName;
+  document.getElementById('room-female-name').textContent = otherName;
+  startRoomEvents(sessionId);
+  toast('相亲间已就绪，AI 正在热场...');
+}
+
+/* ---- 5. 相亲间事件 ---- */
+function startRoomEvents(sessionId) {
+  const logEl = document.getElementById('chat-log-room');
+  if (!logEl) return;
+  logEl.innerHTML = '';
+  // 关闭旧连接
+  if (window._currentEvt) { try { window._currentEvt.close(); } catch(_) {} }
+  var eventQueue = [], isTyping = false, currentEvt = null;
+  function scrollToBottom() { logEl.scrollTop = logEl.scrollHeight; }
+  function typeInto(container, text, opts, done) {
+    opts = opts || {};
+    var speed = opts.speed || 65, chunk = opts.chunk || 2, idx = 0;
+    var cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    container.appendChild(cursor);
+    (function tick() {
+      if (idx >= text.length) { cursor.remove(); done(); return; }
+      var end = Math.min(idx + chunk, text.length);
+      container.insertBefore(document.createTextNode(text.slice(idx, end)), cursor);
+      idx = end; scrollToBottom();
+      setTimeout(tick, speed);
     })();
-
-    function fillProfilePage(data) {
-      const p = data.profile || {};
-      const jobEl = document.getElementById('attr-job');
-      if (jobEl) jobEl.textContent = p.occupation || '—';
-      const tagsEl = document.getElementById('attr-tags');
-      if (tagsEl) {
-        const tags = (p.hobbies || '').split(/[,，、]/).filter(Boolean).slice(0, 6);
-        tagsEl.innerHTML = tags.length ? tags.map(t => '<span class="tag">' + t.trim() + '</span>').join('') : '<span class="tag">待补充</span>';
-      }
-      const avatarBox = document.getElementById('my-avatar');
-      if (avatarBox && (data.avatar_url || p.avatar_url)) {
-        avatarBox.innerHTML = '<img src="' + (data.avatar_url || p.avatar_url) + '" alt="avatar" />';
-      } else if (avatarBox) {
-        avatarBox.innerHTML = '<img class="avatar-placeholder" src="images/avatar-default.png" alt="">';
-      }
-    }
-
-    // 档案页：比心
-    document.getElementById('my-avatar').addEventListener('click', function() {
-      this.classList.add('bixin');
-      setTimeout(() => this.classList.remove('bixin'), 600);
-    });
-
-    document.getElementById('btn-to-lobby').addEventListener('click', function() { showPage('page-lobby'); renderRoomGrid(); });
-
-    document.getElementById('btn-back-from-profile').addEventListener('click', function() { showPage('page-home'); });
-    document.getElementById('btn-back-from-lobby').addEventListener('click', function() { showPage(myProfile ? 'page-profile' : 'page-home'); });
-    document.getElementById('btn-back-from-result').addEventListener('click', function() { showPage('page-lobby'); renderRoomGrid(); });
-
-    document.getElementById('slot1').addEventListener('click', function() { this.classList.toggle('filled'); this.textContent = this.classList.contains('filled') ? '✓' : '+'; });
-    document.getElementById('slot2').addEventListener('click', function() { this.classList.toggle('filled'); this.textContent = this.classList.contains('filled') ? '✓' : '+'; });
-
-    // 大厅：示例房间方格
-    var sampleRooms = [
-      { code: '1001', desc: '长辈介绍·张阿姨组', status: 'chatting' },
-      { code: '1002', desc: '朋友牵线·周末场', status: 'waiting' },
-      { code: '2024', desc: '新年专场', status: 'chatting' },
-      { code: '1234', desc: '测试房间', status: 'waiting' },
-      { code: '8888', desc: '吉利号·缘分局', status: 'waiting' },
-      { code: '6666', desc: '六六大顺', status: 'chatting' },
-    ];
-    function renderRoomGrid() {
-      var el = document.getElementById('room-grid');
-      if (!el) return;
-      el.innerHTML = sampleRooms.map(function(r) {
-        var statusClass = r.status === 'chatting' ? '' : ' waiting';
-        var statusText = r.status === 'chatting' ? '畅聊中' : '等待中';
-        return '<div class="room-card" data-code="' + r.code + '"><div class="room-code">' + r.code + '</div><div class="room-desc">' + r.desc + '</div><div class="room-status' + statusClass + '">' + statusText + '</div></div>';
-      }).join('');
-      el.querySelectorAll('.room-card').forEach(function(card) {
-        card.addEventListener('click', function() {
-          var code = this.getAttribute('data-code');
-          if (code) { document.getElementById('room-code').value = code; createAndStartSession(code); }
-        });
+  }
+  function processQueue() {
+    if (isTyping || !eventQueue.length) return;
+    var item = eventQueue.shift();
+    var wrap = document.createElement('div');
+    wrap.className = 'msg';
+    if (item.type === 'round_start') {
+      wrap.innerHTML = '<strong>【第' + item.round + '轮】</strong> ';
+      logEl.appendChild(wrap);
+      var sp = document.createElement('span'); wrap.appendChild(sp);
+      isTyping = true;
+      typeInto(sp, item.goal || '', { speed: 55 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
+    } else if (item.type === 'message') {
+      var d = document.createElement('div'); d.textContent = ''; // XSS safe
+      wrap.innerHTML = '<strong>' + escapeHtml(item.display_name || item.role || '') + '：</strong> ';
+      var sp = document.createElement('span'); wrap.appendChild(sp);
+      logEl.appendChild(wrap);
+      isTyping = true;
+      typeInto(sp, item.content || '', { speed: 55 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
+    } else if (item.type === 'summary') {
+      wrap.style.cssText = 'background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.2)';
+      wrap.innerHTML = '📋 ';
+      var sp = document.createElement('span'); wrap.appendChild(sp);
+      logEl.appendChild(wrap);
+      isTyping = true;
+      typeInto(sp, item.summary_text || '', { speed: 48 }, () => {
+        isTyping = false; scrollToBottom(); currentEvt.close();
+        setTimeout(() => showPage('page-result'), 1200);
       });
     }
-    renderRoomGrid();
+  }
+  function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  fetch(API_BASE + '/api/dating/sessions/' + sessionId + '/start', { method: 'POST' });
+  currentEvt = new EventSource(API_BASE + '/api/dating/sessions/' + sessionId + '/events');
+  window._currentEvt = currentEvt;
+  currentEvt.onerror = function() {
+    if (currentEvt.readyState === EventSource.CLOSED) toast('连接已断开', 'err');
+  };
+  currentEvt.onmessage = function(e) {
+    try {
+      var data = JSON.parse(e.data);
+      if (data.type === 'round_start') eventQueue.push({ type: 'round_start', round: data.round, goal: data.goal || '' });
+      else if (data.type === 'message') eventQueue.push({ type: 'message', display_name: data.display_name, role: data.role, content: data.content || '' });
+      else if (data.type === 'summary') eventQueue.push({ type: 'summary', summary_text: data.summary_text || '' });
+      processQueue();
+    } catch (_) {}
+  };
+}
 
-    // 大厅：进入房间（对接现有创建会话 + 畅聊）
-    document.getElementById('btn-enter-room').addEventListener('click', function() {
-      const code = (document.getElementById('room-code').value || '').trim();
-      if (code.length !== 4) { alert('请输入 4 位房间号'); return; }
-      createAndStartSession(code);
-    });
+/* ---- 6. 相亲间按钮 ---- */
+document.querySelectorAll('.room-actions .btn[data-act]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    this.style.transform = 'scale(0.92)';
+    setTimeout(() => { this.style.transform = ''; }, 200);
+  });
+});
+document.getElementById('btn-tui').addEventListener('click', function() {
+  var popup = document.getElementById('tui-popup');
+  popup.classList.add('show');
+  setTimeout(() => popup.classList.remove('show'), 1500);
+});
+function exitRoom() {
+  if (window._currentEvt) { try { window._currentEvt.close(); } catch(_) {} window._currentEvt = null; }
+  showLoader('正在退出...');
+  setTimeout(() => { showPage('page-lobby'); fetchLobby(); hideLoader(); toast('已退出相亲间'); }, 300);
+}
+document.getElementById('btn-exit-room').addEventListener('click', exitRoom);
+document.getElementById('btn-exit-room-bottom').addEventListener('click', exitRoom);
 
-    document.getElementById('btn-auto-match').addEventListener('click', function() {
-      createAndStartSession('auto');
-    });
-
-    function createAndStartSession(roomCode) {
-      const payload = {
-        male: myProfile && myProfile.profile ? { display_name: myProfile.name || myProfile.profile.display_name, occupation: myProfile.profile.occupation, extra: myProfile.profile.hobbies } : { display_name: '男方' },
-        female: { display_name: '女方' },
-        male_parent: { display_name: '男方家长' },
-        female_parent: { display_name: '女方家长' },
-        max_rounds: 6
-      };
-      if (authSessionId) payload.secondme_male_session_id = authSessionId;
-      fetch(API_BASE + '/api/dating/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-        .then(r => r.json())
-        .then(d => {
-          showPage('page-room');
-          document.getElementById('room-male-name').textContent = (payload.male && payload.male.display_name) || '男方';
-          document.getElementById('room-female-name').textContent = (payload.female && payload.female.display_name) || '女方';
-          startRoomEvents(d.session_id);
-        })
-        .catch(err => alert('创建失败：' + err.message));
-    }
-
-    function startRoomEvents(sessionId) {
-      const logEl = document.getElementById('chat-log-room');
-      if (!logEl) return;
-      logEl.innerHTML = '';
-      var eventQueue = [];
-      var isTyping = false;
-      var currentEvt = null;
-
-      function scrollToBottom() { logEl.scrollTop = logEl.scrollHeight; }
-
-      function typeInto(container, text, options, onDone) {
-        options = options || {};
-        var speed = options.speed != null ? options.speed : 72;
-        var chunk = options.chunk != null ? options.chunk : 1;
-        var idx = 0;
-        var cursor = document.createElement('span');
-        cursor.className = 'typing-cursor';
-        container.appendChild(cursor);
-        function tick() {
-          if (idx >= text.length) {
-            cursor.remove();
-            onDone();
-            return;
-          }
-          var end = Math.min(idx + chunk, text.length);
-          var segment = text.slice(idx, end);
-          var node = document.createTextNode(segment);
-          container.insertBefore(node, cursor);
-          idx = end;
-          scrollToBottom();
-          setTimeout(tick, speed);
-        }
-        tick();
-      }
-
-      function processQueue() {
-        if (isTyping || eventQueue.length === 0) return;
-        var item = eventQueue.shift();
-        if (item.type === 'round_start') {
-          var wrap = document.createElement('div');
-          wrap.className = 'msg';
-          wrap.innerHTML = '<strong>【第' + item.round + '轮】</strong> ';
-          logEl.appendChild(wrap);
-          var contentSpan = document.createElement('span');
-          wrap.appendChild(contentSpan);
-          isTyping = true;
-          typeInto(contentSpan, item.goal || '', { speed: 60, chunk: 2 }, function() {
-            isTyping = false;
-            scrollToBottom();
-            processQueue();
-          });
-        } else if (item.type === 'message') {
-          var name = item.display_name || item.role || '';
-          var wrap = document.createElement('div');
-          wrap.className = 'msg';
-          wrap.innerHTML = '<strong>' + escapeHtml(name) + '：</strong> ';
-          var contentSpan = document.createElement('span');
-          wrap.appendChild(contentSpan);
-          logEl.appendChild(wrap);
-          isTyping = true;
-          typeInto(contentSpan, item.content || '', { speed: 58, chunk: 2 }, function() {
-            isTyping = false;
-            scrollToBottom();
-            processQueue();
-          });
-        } else if (item.type === 'summary') {
-          var wrap = document.createElement('div');
-          wrap.className = 'msg';
-          wrap.style.cssText = 'background:#fef3c7;padding:8px;border-radius:8px;';
-          wrap.innerHTML = '📋 ';
-          var contentSpan = document.createElement('span');
-          wrap.appendChild(contentSpan);
-          logEl.appendChild(wrap);
-          isTyping = true;
-          typeInto(contentSpan, item.summary_text || '', { speed: 52, chunk: 2 }, function() {
-            isTyping = false;
-            scrollToBottom();
-            currentEvt.close();
-            setTimeout(function() { showPage('page-result'); }, 1200);
-          });
-        }
-      }
-
-      function escapeHtml(s) {
-        var div = document.createElement('div');
-        div.textContent = s;
-        return div.innerHTML;
-      }
-
-      fetch(API_BASE + '/api/dating/sessions/' + sessionId + '/start', { method: 'POST' });
-      currentEvt = new EventSource(API_BASE + '/api/dating/sessions/' + sessionId + '/events');
-      currentEvt.onmessage = function(e) {
-        try {
-          var data = JSON.parse(e.data);
-          if (data.type === 'round_start') {
-            eventQueue.push({ type: 'round_start', round: data.round, goal: data.goal || '' });
-          } else if (data.type === 'message') {
-            eventQueue.push({
-              type: 'message',
-              display_name: data.display_name,
-              role: data.role,
-              content: data.content || ''
-            });
-          } else if (data.type === 'summary') {
-            eventQueue.push({ type: 'summary', summary_text: data.summary_text || '' });
-          }
-          processQueue();
-        } catch (_) {}
-      };
-    }
-
-    document.querySelectorAll('.room-actions button[data-act]').forEach(btn => {
-      btn.addEventListener('click', function() { this.style.transform = 'scale(0.95)'; setTimeout(() => { this.style.transform = ''; }, 150); });
-    });
-    document.getElementById('btn-tui').addEventListener('click', function() {
-      var popup = document.getElementById('tui-popup');
-      popup.classList.add('show');
-      setTimeout(function() { popup.classList.remove('show'); }, 1200);
-    });
-
-    function exitRoom() { showPage('page-lobby'); renderRoomGrid(); }
-    document.getElementById('btn-exit-room').addEventListener('click', exitRoom);
-    document.getElementById('btn-exit-room-bottom').addEventListener('click', exitRoom);
-
-    document.getElementById('btn-result-ok').addEventListener('click', function() {
-      document.getElementById('result-success').classList.add('show');
-      document.getElementById('result-reject').classList.remove('show');
-    });
-    document.getElementById('btn-result-no').addEventListener('click', function() {
-      document.getElementById('result-reject').classList.add('show');
-      document.getElementById('result-success').classList.remove('show');
-    });
-  </script>
+/* ---- 7. 结算 ---- */
+document.getElementById('btn-result-ok').addEventListener('click', function() {
+  document.getElementById('result-success').classList.add('show');
+  document.getElementById('result-reject').classList.remove('show');
+  toast('恭喜牵手成功！🎉');
+});
+document.getElementById('btn-result-no').addEventListener('click', function() {
+  document.getElementById('result-reject').classList.add('show');
+  document.getElementById('result-success').classList.remove('show');
+  toast('没关系，下一个更好！');
+});
+</script>
 </body>
 </html>

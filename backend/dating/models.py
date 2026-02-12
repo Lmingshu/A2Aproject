@@ -38,7 +38,8 @@ ROLE_DISPLAY_NAMES = {
 class DatingProfile:
     """单方档案（男方/女方/男方家长/女方家长）。"""
     role: AgentRole
-    display_name: str  # 如 "小明"、"小红的妈妈"
+    display_name: str
+    avatar_url: str = ""  # 新增头像
     age: Optional[int] = None
     occupation: Optional[str] = None
     education: Optional[str] = None
