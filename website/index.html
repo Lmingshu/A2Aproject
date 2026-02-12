@@ -488,7 +488,7 @@ img{display:block;max-width:100%}
 <div id="toasts"></div>
 
 <!-- ========== 1. 首页 ========== -->
-<div class="page home active" id="page-home">
+<div class="page home" id="page-home">
   <div class="home-badge"><span class="badge badge-pink">月老加班中 🌙</span></div>
   <h1 class="home-title"><span class="grad">A2A 相亲</span></h1>
   <p class="home-sub">过年回家，相亲不尴尬 — 让 AI 先聊，缘分天注定</p>
@@ -507,7 +507,7 @@ img{display:block;max-width:100%}
     </div>
   </div>
 
-  <a href="#" id="btn-secondme-login" class="btn btn-primary">使用 SecondMe 授权登录</a>
+  <a href="#" id="btn-secondme-login" class="btn btn-primary" onclick="return false;">使用 SecondMe 授权登录</a>
   <p class="sync-hint" id="sync-hint">登录后将同步：分身、职业、兴趣、MBTI...</p>
 </div>
 
@@ -534,6 +534,17 @@ img{display:block;max-width:100%}
       <div class="attr-row">
         <div class="attr-label">性格标签</div>
         <div class="tags" id="attr-tags"><span class="tag">待补充</span></div>
+      </div>
+      <div class="attr-row">
+        <div class="attr-label">💭 我的相亲要求</div>
+        <textarea 
+          id="attr-expectation" 
+          placeholder="例如：希望对方有共同爱好，性格开朗，能理解我的工作..."
+          style="width:100%;min-height:80px;padding:12px;border:2px solid var(--bg2);border-radius:var(--r);font-size:.9rem;font-family:inherit;resize:vertical;transition:var(--tr);background:#fff"
+          onfocus="this.style.borderColor='var(--rose)';this.style.background='#fff0f2'"
+          onblur="this.style.borderColor='var(--bg2)';this.style.background='#fff'"
+        ></textarea>
+        <div style="font-size:.75rem;color:var(--text3);margin-top:6px">填写你的择偶标准，AI 会根据这个来帮你聊天</div>
       </div>
       <div class="attr-row">
         <div class="attr-label">亲友团席位</div>
@@ -705,21 +716,48 @@ function toast(msg, type) {
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const el = document.getElementById(id);
-  if (el) el.classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (el) {
+    el.classList.add('active');
+    // 立即滚动到顶部，不使用 smooth 动画，避免"下拉"效果
+    window.scrollTo(0, 0);
+  }
 }
 function getLoginUrl() {
   return (API_BASE || '') + '/api/auth/secondme/login?redirect_path=' + encodeURIComponent('/');
 }
 
 /* ---- 1. 首页 ---- */
-document.getElementById('btn-secondme-login').href = getLoginUrl();
 document.getElementById('btn-secondme-login').addEventListener('click', function(e) {
   e.preventDefault();
+  e.stopPropagation();
+  // 显示加载提示（短暂显示）
   showLoader('正在跳转 SecondMe...');
-  setTimeout(() => { window.location.href = getLoginUrl(); }, 300);
+  // 立即跳转，确保真正的页面跳转（不是单页切换）
+  setTimeout(function() {
+    window.location.href = getLoginUrl();
+  }, 100); // 短暂延迟确保加载器显示
 });
 /* 未登录不能进入大厅（已移除"先逛逛"入口） */
+
+/* ---- 页面初始化：只在首次访问且未登录时显示首页 ---- */
+(function initPage() {
+  const params = new URLSearchParams(window.location.search);
+  const session = params.get('session');
+  const error = params.get('error');
+  
+  // 只在以下情况显示首页：
+  // 1. 没有登录回调参数（session/error）
+  // 2. 没有已登录的用户信息（myProfile）
+  // 3. 当前没有活动页面（所有页面都隐藏）
+  if (!session && !error) {
+    setTimeout(function() {
+      const hasActivePage = document.querySelector('.page.active');
+      if (!hasActivePage && !myProfile) {
+        showPage('page-home');
+      }
+    }, 0);
+  }
+})();
 
 /* ---- 2. 登录回调 ---- */
 (function initAuth() {
@@ -727,32 +765,101 @@ document.getElementById('btn-secondme-login').addEventListener('click', function
   const session = params.get('session');
   const error = params.get('error');
   const hint = document.getElementById('sync-hint');
+  
+  // 如果有 session 参数，说明是从登录回调回来的，需要强制显示加载状态
+  if (session) {
+    showLoader('正在同步你的分身信息...');
+    // 不强制显示首页，保持当前页面状态（加载器会覆盖）
+  }
+  
   if (error) {
+    hideLoader();
+    // 错误时，只在没有活动页面时才显示首页
+    const hasActivePage = document.querySelector('.page.active');
+    if (!hasActivePage) {
+      showPage('page-home');
+    }
     if (hint) hint.textContent = '登录失败：' + (error === 'missing_code' ? '未收到授权码' : error === 'token_failed' ? 'Token 交换失败' : error === 'no_token' ? '未获取到 Token' : error);
     return;
   }
+  
   const doFetch = (sid) => {
     if (sid) authSessionId = sid;
-    if (hint && session) { hint.textContent = '正在抓取你的分身、职业、兴趣、MBTI...'; hint.classList.add('syncing'); }
+    if (hint && session) { 
+      hint.textContent = '正在抓取你的分身、职业、兴趣、MBTI...'; 
+      hint.classList.add('syncing'); 
+    }
     var url = API_BASE + '/api/auth/me';
     if (sid) url += '?session_id=' + encodeURIComponent(sid);
     fetch(url, { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) {
+          throw new Error('HTTP ' + r.status);
+        }
+        return r.json();
+      })
       .then(data => {
         if (data.logged_in && data.profile) {
           myProfile = data;
           if (hint) hint.textContent = '同步完成！';
           fillProfilePage(data);
           hideLoader();
-          setTimeout(() => { showPage('page-profile'); toast('登录成功，分身已同步！'); }, session ? 600 : 0);
+          
+          // 清理 URL 参数，避免刷新时重复处理
+          if (params.has('session') || params.has('error')) {
+            try { 
+              window.history.replaceState({}, '', window.location.pathname || '/'); 
+            } catch(_) {}
+          }
+          
+          // 登录成功后，立即切换到档案页
+          showPage('page-profile');
+          toast('登录成功，分身已同步！');
         } else if (hint && session) {
-          hint.textContent = '同步失败，请重试'; hint.classList.remove('syncing');
+          hideLoader();
+          // 失败时，只在没有活动页面时才显示首页
+          const hasActivePage = document.querySelector('.page.active');
+          if (!hasActivePage) {
+            showPage('page-home');
+          }
+          hint.textContent = '同步失败，请重试'; 
+          hint.classList.remove('syncing');
+        } else {
+          hideLoader();
+          // 未登录时，只在没有活动页面时才显示首页
+          if (!session) {
+            const hasActivePage = document.querySelector('.page.active');
+            if (!hasActivePage) {
+              showPage('page-home');
+            }
+          }
         }
-        if (params.has('session')) try { window.history.replaceState({}, '', window.location.pathname || '/'); } catch(_) {}
       })
-      .catch(() => { if (hint) { hint.textContent = '网络异常，请重试'; hint.classList.remove('syncing'); } });
+      .catch(function(err) { 
+        hideLoader();
+        // 异常时，只在没有活动页面时才显示首页
+        const hasActivePage = document.querySelector('.page.active');
+        if (!hasActivePage) {
+          showPage('page-home');
+        }
+        console.error('获取用户信息失败:', err);
+        if (hint) { 
+          hint.textContent = '网络异常，请重试'; 
+          hint.classList.remove('syncing'); 
+        }
+        if (session) {
+          toast('登录失败，请重试', 'err');
+        }
+      });
   };
-  if (session) doFetch(session); else doFetch();
+  
+  if (session) {
+    // 有 session 参数，说明是登录回调，立即处理
+    doFetch(session);
+  } else {
+    // 没有 session，可能是首次加载，检查是否已登录
+    doFetch();
+  }
 })();
 
 function fillProfilePage(data) {
@@ -762,13 +869,24 @@ function fillProfilePage(data) {
   const tagsEl = document.getElementById('attr-tags');
   if (tagsEl) {
     const tags = (p.hobbies || '').split(/[,，、]/).filter(Boolean).slice(0, 6);
-    tagsEl.innerHTML = tags.length ? tags.map(t => '<span class="tag">' + t.trim() + '</span>').join('') : '<span class="tag">待补充</span>';
+    tagsEl.innerHTML = tags.length ? tags.map(t => '<span class="tag">' + escapeHtml(t.trim()) + '</span>').join('') : '<span class="tag">待补充</span>';
+  }
+  // 填充相亲要求
+  const expectationEl = document.getElementById('attr-expectation');
+  if (expectationEl) {
+    expectationEl.value = p.expectation || '';
   }
   const box = document.getElementById('my-avatar');
   if (box) {
     const url = data.avatar_url || p.avatar_url;
     if (url) box.querySelector('img').src = url;
   }
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
 }
 
 /* ---- 3. 档案页交互 ---- */
@@ -831,12 +949,18 @@ function renderNpcGrid() {
 
 function fetchLobby() {
   fetch(API_BASE + '/api/dating/lobby')
-    .then(function(r){ return r.json(); })
+    .then(function(r){ 
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json(); 
+    })
     .then(function(d){
       lobbyNpcs = d.users || [];
       renderNpcGrid();
     })
-    .catch(function(){ toast('加载大厅失败', 'err'); });
+    .catch(function(err){ 
+      console.error('加载大厅失败:', err);
+      toast('加载大厅失败：' + (err.message || '网络异常'), 'err'); 
+    });
 }
 
 /* 选择指定 NPC 相亲 */
@@ -851,12 +975,21 @@ function startMatchWithNpc(npc) {
   }
   payload.target_user_id = npc.id;
   fetch(API_BASE + '/api/dating/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
-    .then(function(r){ return r.json(); })
+    .then(function(r){ 
+      if (!r.ok) {
+        return r.json().then(function(err){ throw new Error(err.detail || 'HTTP ' + r.status); });
+      }
+      return r.json(); 
+    })
     .then(function(d){
       hideLoader();
       enterRoom(d.session_id, payload);
     })
-    .catch(function(err){ hideLoader(); toast('创建失败：'+(err.message||'网络异常'), 'err'); });
+    .catch(function(err){ 
+      hideLoader(); 
+      console.error('创建会话失败:', err);
+      toast('创建失败：'+(err.message||'网络异常'), 'err'); 
+    });
 }
 
 /* 全自动随机匹配 */
@@ -864,14 +997,27 @@ document.getElementById('btn-auto-match').addEventListener('click', function() {
   showLoader('月老正在翻红线簿...');
   var payload = buildSessionPayload();
   fetch(API_BASE + '/api/dating/auto-match', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
-    .then(function(r){ if(!r.ok) throw new Error('匹配失败'); return r.json(); })
+    .then(function(r){ 
+      if (!r.ok) {
+        return r.json().then(function(err){ throw new Error(err.detail || 'HTTP ' + r.status); });
+      }
+      return r.json(); 
+    })
     .then(function(d){
       hideLoader();
       // 展示匹配结果弹窗
       var npc = d.matched_npc || {};
+      if (!npc.display_name) {
+        toast('匹配成功，但未获取到对方信息', 'err');
+        return;
+      }
       showMatchReveal(npc, d.session_id, payload);
     })
-    .catch(function(err){ hideLoader(); toast('匹配失败：'+(err.message||'暂无合适对象'), 'err'); });
+    .catch(function(err){ 
+      hideLoader(); 
+      console.error('自动匹配失败:', err);
+      toast('匹配失败：'+(err.message||'暂无合适对象'), 'err'); 
+    });
 });
 
 function showMatchReveal(npc, sessionId, payload) {
@@ -909,20 +1055,39 @@ function createManualSession(roomCode) {
   showLoader('月老正在分配红线...');
   var payload = buildSessionPayload();
   fetch(API_BASE + '/api/dating/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
-    .then(function(r){ return r.json(); })
+    .then(function(r){ 
+      if (!r.ok) {
+        return r.json().then(function(err){ throw new Error(err.detail || 'HTTP ' + r.status); });
+      }
+      return r.json(); 
+    })
     .then(function(d){
       hideLoader();
       enterRoom(d.session_id, payload);
     })
-    .catch(function(err){ hideLoader(); toast('创建失败：'+(err.message||'网络异常'), 'err'); });
+    .catch(function(err){ 
+      hideLoader(); 
+      console.error('创建会话失败:', err);
+      toast('创建失败：'+(err.message||'网络异常'), 'err'); 
+    });
 }
 
 /* 通用：构建 session payload */
 function buildSessionPayload() {
+  // 获取用户输入的相亲要求
+  var expectationEl = document.getElementById('attr-expectation');
+  var userExpectation = expectationEl ? (expectationEl.value || '').trim() : '';
+  
   var p = {
     male: myProfile && myProfile.profile
-      ? { display_name: myProfile.name || myProfile.profile.display_name, occupation: myProfile.profile.occupation||'', hobbies: myProfile.profile.hobbies||'', extra: myProfile.profile.extra||'' }
-      : { display_name: '我' },
+      ? { 
+          display_name: myProfile.name || myProfile.profile.display_name, 
+          occupation: myProfile.profile.occupation||'', 
+          hobbies: myProfile.profile.hobbies||'', 
+          extra: myProfile.profile.extra||'',
+          expectation: userExpectation || myProfile.profile.expectation || '' // 优先使用用户输入的，否则用 SecondMe 同步的
+        }
+      : { display_name: '我', expectation: userExpectation },
     female: { display_name: '女方' },
     male_parent: { display_name: '我的家长' },
     female_parent: { display_name: '女方家长' },
@@ -954,7 +1119,13 @@ function startRoomEvents(sessionId) {
   function scrollToBottom() { logEl.scrollTop = logEl.scrollHeight; }
   function typeInto(container, text, opts, done) {
     opts = opts || {};
-    var speed = opts.speed || 65, chunk = opts.chunk || 2, idx = 0;
+    // 模拟真人打字速度：每分钟约 40-50 字，每个字符约 120-150ms
+    // 根据文本长度动态调整速度，短文本稍快，长文本稍慢
+    var baseSpeed = opts.speed || 130;
+    var textLength = text.length;
+    // 短文本（<20字）稍快，长文本（>50字）稍慢，模拟真人打字时的节奏变化
+    var dynamicSpeed = textLength < 20 ? baseSpeed * 0.9 : (textLength > 50 ? baseSpeed * 1.1 : baseSpeed);
+    var chunk = opts.chunk || 1, idx = 0;
     var cursor = document.createElement('span');
     cursor.className = 'typing-cursor';
     container.appendChild(cursor);
@@ -963,7 +1134,12 @@ function startRoomEvents(sessionId) {
       var end = Math.min(idx + chunk, text.length);
       container.insertBefore(document.createTextNode(text.slice(idx, end)), cursor);
       idx = end; scrollToBottom();
-      setTimeout(tick, speed);
+      // 偶尔添加随机延迟，模拟真人打字的自然停顿（标点符号后稍长停顿）
+      var delay = dynamicSpeed;
+      if (idx > 0 && text[idx - 1] && /[，。！？、]/.test(text[idx - 1])) {
+        delay = dynamicSpeed * 1.5; // 标点后停顿稍长
+      }
+      setTimeout(tick, delay);
     })();
   }
   function processQueue() {
@@ -976,41 +1152,78 @@ function startRoomEvents(sessionId) {
       logEl.appendChild(wrap);
       var sp = document.createElement('span'); wrap.appendChild(sp);
       isTyping = true;
-      typeInto(sp, item.goal || '', { speed: 55 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
+      // 轮次提示稍快一些，因为通常比较短
+      typeInto(sp, item.goal || '', { speed: 120 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
     } else if (item.type === 'message') {
-      var d = document.createElement('div'); d.textContent = ''; // XSS safe
+      // 模拟真人思考时间：在显示消息前添加 0.8-1.5 秒的随机延迟
+      var thinkTime = 800 + Math.random() * 700; // 0.8-1.5秒随机思考时间
+      // 先显示消息容器（带名字），但内容稍后显示，模拟思考过程
       wrap.innerHTML = '<strong>' + escapeHtml(item.display_name || item.role || '') + '：</strong> ';
-      var sp = document.createElement('span'); wrap.appendChild(sp);
       logEl.appendChild(wrap);
+      // 立即设置 isTyping = true，防止在思考期间处理下一个消息
       isTyping = true;
-      typeInto(sp, item.content || '', { speed: 55 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
+      setTimeout(function() {
+        var sp = document.createElement('span'); wrap.appendChild(sp);
+        // 消息内容使用正常交流速度，模拟真人打字（每分钟约40-50字）
+        typeInto(sp, item.content || '', { speed: 130 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
+      }, thinkTime);
     } else if (item.type === 'summary') {
       wrap.style.cssText = 'background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.2)';
       wrap.innerHTML = '📋 ';
       var sp = document.createElement('span'); wrap.appendChild(sp);
       logEl.appendChild(wrap);
       isTyping = true;
-      typeInto(sp, item.summary_text || '', { speed: 48 }, () => {
+      // 总结文本稍慢一些，因为通常比较长且重要
+      typeInto(sp, item.summary_text || '', { speed: 140 }, () => {
         isTyping = false; scrollToBottom(); currentEvt.close();
         setTimeout(() => showPage('page-result'), 1200);
       });
     }
   }
   function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-  fetch(API_BASE + '/api/dating/sessions/' + sessionId + '/start', { method: 'POST' });
+  
+  // 启动会话（忽略错误，因为可能已经启动）
+  fetch(API_BASE + '/api/dating/sessions/' + sessionId + '/start', { method: 'POST' })
+    .catch(function(err) { console.warn('启动会话失败（可能已启动）:', err); });
+  
+  // 建立 SSE 连接
   currentEvt = new EventSource(API_BASE + '/api/dating/sessions/' + sessionId + '/events');
   window._currentEvt = currentEvt;
-  currentEvt.onerror = function() {
-    if (currentEvt.readyState === EventSource.CLOSED) toast('连接已断开', 'err');
+  currentEvt.onerror = function(e) {
+    console.error('EventSource 错误:', e);
+    if (currentEvt.readyState === EventSource.CLOSED) {
+      toast('连接已断开，请刷新页面重试', 'err');
+      // 尝试重新连接
+      setTimeout(function() {
+        if (currentEvt.readyState === EventSource.CLOSED) {
+          toast('正在重新连接...', 'ok');
+          startRoomEvents(sessionId);
+        }
+      }, 3000);
+    }
   };
   currentEvt.onmessage = function(e) {
     try {
       var data = JSON.parse(e.data);
-      if (data.type === 'round_start') eventQueue.push({ type: 'round_start', round: data.round, goal: data.goal || '' });
-      else if (data.type === 'message') eventQueue.push({ type: 'message', display_name: data.display_name, role: data.role, content: data.content || '' });
-      else if (data.type === 'summary') eventQueue.push({ type: 'summary', summary_text: data.summary_text || '' });
+      // 忽略心跳消息
+      if (data.type === 'heartbeat') return;
+      
+      if (data.type === 'round_start') {
+        eventQueue.push({ type: 'round_start', round: data.round, goal: data.goal || '' });
+      } else if (data.type === 'message') {
+        eventQueue.push({ 
+          type: 'message', 
+          display_name: data.display_name || '', 
+          role: data.role || '', 
+          content: data.content || '' 
+        });
+      } else if (data.type === 'summary') {
+        eventQueue.push({ type: 'summary', summary_text: data.summary_text || '' });
+      }
       processQueue();
-    } catch (_) {}
+    } catch (err) {
+      console.error('解析 SSE 消息失败:', err, e.data);
+    }
   };
 }
 

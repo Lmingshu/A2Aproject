@@ -129,8 +129,9 @@ class ConversationEngine:
                         self.on_message(session, msg)
                     except Exception as e:
                         logger.warning("on_message callback error: %s", e)
-                # 每条消息间隔推送，前端流式打字时更像真实对话节奏
-                await asyncio.sleep(0.5)
+                # 每条消息间隔推送，模拟真人交流的思考时间（2-3秒间隔）
+                # 真人对话中，每条消息之间通常有思考、组织语言的时间
+                await asyncio.sleep(2.5)
 
         # 达到最大轮数仍未总结，由 Center 强制总结
         session.state = DatingSessionState.SUMMARIZING

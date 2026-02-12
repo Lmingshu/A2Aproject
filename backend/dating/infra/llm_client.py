@@ -141,9 +141,17 @@ class KimiLLMClient(LLMClient):
         model: str = "kimi-k2-turbo-preview",
         base_url: str = "https://api.moonshot.cn/v1",
     ):
-        self.api_key = api_key or os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
+        raw_key = api_key or os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY")
+        # 清理 API Key：去除首尾空格和换行符
+        self.api_key = raw_key.strip() if raw_key else None
         self.model = model
         self.base_url = base_url.rstrip("/")
+        
+        # 调试日志：检查 API Key 是否读取成功（不打印完整 key）
+        if self.api_key:
+            logger.info("Kimi API Key 已加载（长度: %d，前缀: %s...）", len(self.api_key), self.api_key[:8])
+        else:
+            logger.warning("Kimi API Key 未找到，请检查环境变量 MOONSHOT_API_KEY 或 KIMI_API_KEY")
 
     async def chat(self, messages: list[dict[str, str]], max_tokens: int = 1024) -> str:
         if not self.api_key:
@@ -174,9 +182,18 @@ class KimiLLMClient(LLMClient):
             return "[Kimi API 网络异常，请稍后重试]"
 
         if r.status_code != 200:
-            logger.warning("Kimi API 错误 %d: %s", r.status_code, r.text[:200])
+            error_detail = r.text[:500] if r.text else "无错误详情"
+            logger.error("Kimi API 错误 %d: %s", r.status_code, error_detail)
+            
+            # 401 = 认证失败
+            if r.status_code == 401:
+                logger.error("API Key 认证失败！请检查：")
+                logger.error("1. MOONSHOT_API_KEY 环境变量是否正确设置")
+                logger.error("2. API Key 是否有效（未过期、有权限）")
+                logger.error("3. API Key 格式是否正确（应类似 sk-xxx）")
+                return "[AI 认证失败 (401)，请检查 API Key 是否正确配置]"
             # 429 = 限流
-            if r.status_code == 429:
+            elif r.status_code == 429:
                 return "[AI 请求过于频繁，请稍等片刻再试]"
             return f"[AI 服务暂时不可用 ({r.status_code})，请稍后重试]"
 

@@ -36,8 +36,13 @@ def _get_engine() -> ConversationEngine:
         try:
             kimi = KimiLLMClient()
             if kimi.api_key:
+                # 验证 API Key 格式
+                if not kimi.api_key.startswith("sk-"):
+                    logger.warning("Kimi API Key 格式可能不正确（应以 'sk-' 开头）")
                 client = kimi
-                logger.info("使用 Kimi (Moonshot AI) 作为 LLM 引擎")
+                logger.info("✅ 使用 Kimi (Moonshot AI) 作为 LLM 引擎")
+            else:
+                logger.warning("⚠️  Kimi API Key 未配置，检查环境变量 MOONSHOT_API_KEY")
         except Exception as e:
             logger.warning("Kimi init failed: %s", e)
         if not client:
@@ -118,19 +123,49 @@ async def auto_match(body: CreateSessionRequest) -> dict:
     """全自动匹配：根据用户性别随机选一个异性 NPC，自动创建会话并开始对话。"""
     profiles = {}
 
-    # 1. 确定用户自己的档案
+    # 1. 确定用户自己的档案（支持男女双方）
     my_profile = None
+    my_role = None
+    
+    # 优先使用 SecondMe 登录档案
     if body.secondme_male_session_id:
         auth_sess = get_auth_session(body.secondme_male_session_id)
         if auth_sess and auth_sess.get("user_info"):
             my_profile = secondme_to_dating_profile(auth_sess["user_info"], AgentRole.MALE)
             profiles[AgentRole.MALE] = my_profile
-    if not my_profile and body.male:
-        my_profile = _profile_from_input(AgentRole.MALE, body.male)
-        profiles[AgentRole.MALE] = my_profile
+            my_role = AgentRole.MALE
+            # 如果用户在前端输入了相亲要求，优先使用用户输入的
+            if body.male and body.male.expectation:
+                my_profile.expectation = body.male.expectation
+    elif body.secondme_female_session_id:
+        auth_sess = get_auth_session(body.secondme_female_session_id)
+        if auth_sess and auth_sess.get("user_info"):
+            my_profile = secondme_to_dating_profile(auth_sess["user_info"], AgentRole.FEMALE)
+            profiles[AgentRole.FEMALE] = my_profile
+            my_role = AgentRole.FEMALE
+            # 如果用户在前端输入了相亲要求，优先使用用户输入的
+            if body.female and body.female.expectation:
+                my_profile.expectation = body.female.expectation
+    
+    # 如果没有 SecondMe 登录，使用表单数据
+    if not my_profile:
+        if body.male and body.male.display_name and body.male.display_name != '我':
+            my_profile = _profile_from_input(AgentRole.MALE, body.male)
+            profiles[AgentRole.MALE] = my_profile
+            my_role = AgentRole.MALE
+        elif body.female and body.female.display_name and body.female.display_name != '女方':
+            my_profile = _profile_from_input(AgentRole.FEMALE, body.female)
+            profiles[AgentRole.FEMALE] = my_profile
+            my_role = AgentRole.FEMALE
+    
+    # 如果仍然无法确定，默认使用 male（因为当前实现主要支持男性用户）
+    if not my_role:
+        my_role = AgentRole.MALE
+        if not my_profile:
+            my_profile = _profile_from_input(AgentRole.MALE, body.male) if body.male else DatingProfile(role=AgentRole.MALE, display_name="我")
+            profiles[AgentRole.MALE] = my_profile
 
     # 2. 随机选一个异性 NPC
-    my_role = AgentRole.MALE if AgentRole.MALE in profiles else AgentRole.FEMALE
     target_role = AgentRole.FEMALE if my_role == AgentRole.MALE else AgentRole.MALE
     match_result = random_match(prefer_role=target_role)
     if not match_result:
@@ -157,6 +192,12 @@ async def auto_match(body: CreateSessionRequest) -> dict:
             profiles[my_parent_role] = _profile_from_input(my_parent_role, body.male_parent)
         elif body.female_parent:
             profiles[my_parent_role] = _profile_from_input(my_parent_role, body.female_parent)
+        else:
+            # 自动生成默认家长角色
+            profiles[my_parent_role] = DatingProfile(
+                role=my_parent_role,
+                display_name="我的家长" if my_role == AgentRole.MALE else "我的家长",
+            )
 
     session = create_session(profiles, max_rounds=body.max_rounds)
     sessions[session.session_id] = session
@@ -210,17 +251,31 @@ async def create_dating_session(body: CreateSessionRequest) -> dict:
             profiles[AgentRole.MALE] = secondme_to_dating_profile(
                 auth_sess["user_info"], AgentRole.MALE
             )
+            # 如果用户在前端输入了相亲要求，优先使用用户输入的
+            if body.male and body.male.expectation:
+                profiles[AgentRole.MALE].expectation = body.male.expectation
     if body.secondme_female_session_id:
         auth_sess = get_auth_session(body.secondme_female_session_id)
         if auth_sess and auth_sess.get("user_info"):
             profiles[AgentRole.FEMALE] = secondme_to_dating_profile(
                 auth_sess["user_info"], AgentRole.FEMALE
             )
+            # 如果用户在前端输入了相亲要求，优先使用用户输入的
+            if body.female and body.female.expectation:
+                profiles[AgentRole.FEMALE].expectation = body.female.expectation
     # 表单档案（未用 SecondMe 或补充）
     if body.male:
-        profiles[AgentRole.MALE] = _profile_from_input(AgentRole.MALE, body.male)
+        # 如果已有 SecondMe 档案，只更新 expectation（如果提供了）
+        if AgentRole.MALE in profiles and body.male.expectation:
+            profiles[AgentRole.MALE].expectation = body.male.expectation
+        else:
+            profiles[AgentRole.MALE] = _profile_from_input(AgentRole.MALE, body.male)
     if body.female:
-        profiles[AgentRole.FEMALE] = _profile_from_input(AgentRole.FEMALE, body.female)
+        # 如果已有 SecondMe 档案，只更新 expectation（如果提供了）
+        if AgentRole.FEMALE in profiles and body.female.expectation:
+            profiles[AgentRole.FEMALE].expectation = body.female.expectation
+        else:
+            profiles[AgentRole.FEMALE] = _profile_from_input(AgentRole.FEMALE, body.female)
     if body.male_parent:
         profiles[AgentRole.MALE_PARENT] = _profile_from_input(AgentRole.MALE_PARENT, body.male_parent)
     if body.female_parent:
@@ -259,17 +314,75 @@ async def get_session(session_id: str) -> dict:
     }
 
 
+# 跟踪正在运行的会话任务，避免重复启动
+_running_sessions: set[str] = set()
+
+
 @router.post("/dating/sessions/{session_id}/start", response_model=dict)
 async def start_conversation(session_id: str) -> dict:
-    """开始或继续畅聊（后台异步跑完多轮，事件通过 SSE/WS 推送）。"""
+    """开始或继续畅聊（后台异步异步跑完多轮，事件通过 SSE/WS 推送）。"""
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="session not found")
     session = sessions[session_id]
+    
     if session.state == DatingSessionState.COMPLETED:
         return {"session_id": session_id, "state": session.state.value, "message": "already completed"}
+    
+    # 检查是否已经在运行
+    if session_id in _running_sessions:
+        logger.info("会话 %s 已在运行中，跳过重复启动", session_id)
+        return {"session_id": session_id, "state": session.state.value, "message": "already running"}
+    
     eng = _get_engine()
-    asyncio.create_task(eng.run_session(session))
+    
+    async def run_with_cleanup():
+        try:
+            _running_sessions.add(session_id)
+            await eng.run_session(session)
+        finally:
+            _running_sessions.discard(session_id)
+    
+    asyncio.create_task(run_with_cleanup())
     return {"session_id": session_id, "state": session.state.value, "message": "started"}
+
+
+@router.get("/dating/debug/llm-status")
+async def debug_llm_status() -> dict:
+    """调试端点：检查 LLM 配置状态（不暴露完整 API Key）。"""
+    status = {
+        "kimi": {"configured": False, "key_length": 0, "key_prefix": ""},
+        "claude": {"configured": False, "key_length": 0, "key_prefix": ""},
+        "active": "unknown",
+    }
+    
+    # 检查 Kimi
+    try:
+        kimi = KimiLLMClient()
+        if kimi.api_key:
+            status["kimi"]["configured"] = True
+            status["kimi"]["key_length"] = len(kimi.api_key)
+            status["kimi"]["key_prefix"] = kimi.api_key[:8] + "..." if len(kimi.api_key) > 8 else "***"
+            status["kimi"]["key_format_valid"] = kimi.api_key.startswith("sk-")
+            status["active"] = "kimi"
+    except Exception as e:
+        status["kimi"]["error"] = str(e)
+    
+    # 检查 Claude
+    try:
+        claude = ClaudeLLMClient()
+        if claude.api_key:
+            status["claude"]["configured"] = True
+            status["claude"]["key_length"] = len(claude.api_key)
+            status["claude"]["key_prefix"] = claude.api_key[:8] + "..." if len(claude.api_key) > 8 else "***"
+            if status["active"] == "unknown":
+                status["active"] = "claude"
+    except Exception as e:
+        status["claude"]["error"] = str(e)
+    
+    if status["active"] == "unknown":
+        status["active"] = "mock"
+    
+    return status
 
 
 @router.get("/dating/sessions/{session_id}/events")
