@@ -22,6 +22,7 @@ from backend.auth.session_store import (
     create_session as create_auth_session,
     delete_session,
     get_session,
+    get_session_gender,
     set_session_user_info,
     update_session_tokens,
 )
@@ -74,7 +75,6 @@ async def secondme_callback(
     request: Request,
     code: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
-    response: Response = None,
 ) -> RedirectResponse:
     """
     SecondMe 授权回调。用 code 换 token，创建 session，写 cookie，重定向回前端。
@@ -102,6 +102,10 @@ async def secondme_callback(
     try:
         user_info = await fetch_user_info(access_token)
         set_session_user_info(session_id, user_info)
+        
+        # 注意：不在此处加入大厅，等用户在前端选择性别后，
+        # 通过 POST /api/dating/lobby/update-gender 正式加入大厅
+        logger.info("用户 %s 登录成功，待选择性别后加入大厅", user_info.get("name"))
     except Exception as e:
         logger.warning("Fetch user info failed: %s", e)
 
@@ -170,20 +174,22 @@ async def get_me(request: Request, session_id: Optional[str] = Query(None)) -> d
         return {"logged_in": True, "profile": None}
 
     profile = secondme_to_profile_input(user_info)
+    gender = get_session_gender(session_id)
     return {
         "logged_in": True,
         "session_id": session_id,
         "profile": profile,
         "name": user_info.get("name"),
         "avatar_url": user_info.get("avatarUrl") or user_info.get("avatar"),
+        "gender": gender,  # 用户选择的性别（可能为 None，前端默认 male）
     }
 
 
 @router.post("/logout")
-async def logout(response: Response, session_id: Optional[str] = Query(None)) -> dict[str, Any]:
-    """登出：删除服务端 session，并清除 Cookie（需前端配合清除 Cookie 或传 session_id）。"""
-    if session_id:
-        delete_session(session_id)
-    resp = {"ok": True}
+async def logout(request: Request, response: Response, session_id: Optional[str] = Query(None)) -> dict[str, Any]:
+    """登出：删除服务端 session，并清除 Cookie。"""
+    sid = session_id or request.cookies.get(SESSION_COOKIE_NAME)
+    if sid:
+        delete_session(sid)
     response.delete_cookie(SESSION_COOKIE_NAME, path="/")
-    return resp
+    return {"ok": True}

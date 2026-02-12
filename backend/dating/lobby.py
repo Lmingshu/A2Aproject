@@ -137,11 +137,13 @@ def add_user_to_lobby(user_id: str, profile: DatingProfile):
 
 
 def get_lobby_users() -> List[Dict]:
-    """获取大厅列表（前端渲染用）。"""
+    """获取大厅列表（前端渲染用）。区分 NPC 和真实用户。"""
     if not LOBBY_USERS:
         init_lobby()
-    return [
-        {
+    result = []
+    for uid, p in LOBBY_USERS.items():
+        is_npc = uid.startswith("npc_")
+        result.append({
             "id": uid,
             "display_name": p.display_name,
             "age": p.age,
@@ -152,25 +154,42 @@ def get_lobby_users() -> List[Dict]:
             "expectation": p.expectation,
             "extra": p.extra,
             "desc": f"{p.age}岁 · {p.occupation}" if p.age else p.occupation,
-        }
-        for uid, p in LOBBY_USERS.items()
-    ]
+            "is_npc": is_npc,  # 标识是否为 NPC
+            "is_real_user": not is_npc,  # 标识是否为真实用户
+        })
+    return result
 
 
 def get_user_from_lobby(user_id: str) -> DatingProfile | None:
     return LOBBY_USERS.get(user_id)
 
 
-def random_match(exclude_ids: list[str] | None = None, prefer_role: AgentRole | None = None) -> tuple[str, DatingProfile] | None:
-    """随机匹配一个 NPC（排除指定 ID，可偏好角色）。"""
+def random_match(exclude_ids: list[str] | None = None, prefer_role: AgentRole | None = None, include_real_users: bool = True) -> tuple[str, DatingProfile] | None:
+    """
+    随机匹配一个用户（排除指定 ID，可偏好角色）。
+    优先匹配真实用户，如果没有则匹配 NPC。
+    """
     if not LOBBY_USERS:
         init_lobby()
-    candidates = [
+    
+    # 先尝试匹配真实用户
+    if include_real_users:
+        real_user_candidates = [
+            (uid, p) for uid, p in LOBBY_USERS.items()
+            if (not exclude_ids or uid not in exclude_ids)
+            and (prefer_role is None or p.role == prefer_role)
+            and not uid.startswith("npc_")  # 真实用户
+        ]
+        if real_user_candidates:
+            return random.choice(real_user_candidates)
+    
+    # 如果没有真实用户，匹配 NPC
+    npc_candidates = [
         (uid, p) for uid, p in LOBBY_USERS.items()
         if (not exclude_ids or uid not in exclude_ids)
         and (prefer_role is None or p.role == prefer_role)
         and uid.startswith("npc_")  # 只匹配 NPC
     ]
-    if not candidates:
+    if not npc_candidates:
         return None
-    return random.choice(candidates)
+    return random.choice(npc_candidates)

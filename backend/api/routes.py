@@ -8,7 +8,7 @@ import json
 import logging
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -17,7 +17,7 @@ from backend.dating.engine import ConversationEngine, create_session
 from backend.dating.infra.llm_client import ClaudeLLMClient, KimiLLMClient, MockLLMClient
 from backend.dating.adapters import secondme_to_dating_profile
 from backend.api.events import get_event_pusher
-from backend.auth.session_store import get_session as get_auth_session
+from backend.auth.session_store import get_session as get_auth_session, set_session_gender, get_session_gender
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def _get_engine() -> ConversationEngine:
             llm_client=client,
             max_rounds=6,
             on_round_start=lambda s, goal: asyncio.create_task(
-                pusher.push(s.session_id, {"type": "round_start", "round": s.current_round, "goal": goal})
+                pusher.push(s.session_id, {"type": "round_start", "round": s.current_round, "max_rounds": s.max_rounds, "goal": goal})
             ),
             on_message=lambda s, m: asyncio.create_task(
                 pusher.push(s.session_id, {
@@ -104,6 +104,7 @@ class CreateSessionRequest(BaseModel):
     # 新增：指定对手 ID (来自大厅)
     target_user_id: Optional[str] = None
     my_user_id: Optional[str] = None  # 当前用户 ID (用于加入大厅)
+    user_gender: Optional[str] = None  # 用户选择的性别 (male/female)
 
 # ... (保留 create_dating_session 但需修改逻辑) ...
 
@@ -116,6 +117,34 @@ init_lobby()
 async def get_lobby():
     """获取大厅用户列表"""
     return {"users": get_lobby_users()}
+
+
+@router.post("/dating/lobby/update-gender")
+async def update_lobby_gender(request: Request) -> dict:
+    """用户在档案页选择性别后，更新大厅中自己的角色。"""
+    data = await request.json()
+    session_id = data.get("session_id") or request.cookies.get("a2a_session")
+    gender = data.get("gender", "male")
+
+    if not session_id:
+        return {"ok": False, "error": "未登录"}
+
+    auth_sess = get_auth_session(session_id)
+    if not auth_sess or not auth_sess.get("user_info"):
+        return {"ok": False, "error": "未找到用户信息"}
+
+    user_info = auth_sess["user_info"]
+    new_role = AgentRole.FEMALE if gender == "female" else AgentRole.MALE
+    user_id = f"user_{user_info.get('userId', session_id)}"
+
+    # 保存性别到 session
+    set_session_gender(session_id, gender)
+
+    # 重新构建 profile 并更新大厅
+    new_profile = secondme_to_dating_profile(user_info, new_role)
+    add_user_to_lobby(user_id, new_profile)
+    logger.info("用户 %s 更新性别为 %s", user_info.get("name"), gender)
+    return {"ok": True, "user_id": user_id, "gender": gender}
 
 
 @router.post("/dating/auto-match", response_model=dict)
@@ -158,12 +187,13 @@ async def auto_match(body: CreateSessionRequest) -> dict:
             profiles[AgentRole.FEMALE] = my_profile
             my_role = AgentRole.FEMALE
     
-    # 如果仍然无法确定，默认使用 male（因为当前实现主要支持男性用户）
+    # 如果仍然无法确定，使用用户选择的性别或默认 male
     if not my_role:
-        my_role = AgentRole.MALE
+        my_role = AgentRole.FEMALE if body.user_gender == "female" else AgentRole.MALE
         if not my_profile:
-            my_profile = _profile_from_input(AgentRole.MALE, body.male) if body.male else DatingProfile(role=AgentRole.MALE, display_name="我")
-            profiles[AgentRole.MALE] = my_profile
+            input_data = body.female if my_role == AgentRole.FEMALE else body.male
+            my_profile = _profile_from_input(my_role, input_data) if input_data else DatingProfile(role=my_role, display_name="我")
+            profiles[my_role] = my_profile
 
     # 2. 随机选一个异性 NPC
     target_role = AgentRole.FEMALE if my_role == AgentRole.MALE else AgentRole.MALE
@@ -188,23 +218,33 @@ async def auto_match(body: CreateSessionRequest) -> dict:
         extra=npc_meta.get("parent_style", ""),
     )
     if my_parent_role not in profiles:
-        if body.male_parent:
-            profiles[my_parent_role] = _profile_from_input(my_parent_role, body.male_parent)
-        elif body.female_parent:
-            profiles[my_parent_role] = _profile_from_input(my_parent_role, body.female_parent)
+        # 根据用户性别选择正确的家长输入
+        my_parent_input = body.male_parent if my_role == AgentRole.MALE else body.female_parent
+        if my_parent_input:
+            profiles[my_parent_role] = _profile_from_input(my_parent_role, my_parent_input)
         else:
             # 自动生成默认家长角色
             profiles[my_parent_role] = DatingProfile(
                 role=my_parent_role,
-                display_name="我的家长" if my_role == AgentRole.MALE else "我的家长",
+                display_name="我的家长",
             )
 
     session = create_session(profiles, max_rounds=body.max_rounds)
     sessions[session.session_id] = session
 
-    # 自动开始对话
+    # 自动开始对话（通过 _running_sessions 防重复）
     eng = _get_engine()
-    asyncio.create_task(eng.run_session(session))
+
+    async def run_with_cleanup():
+        try:
+            _running_sessions.add(session.session_id)
+            # 延迟 2 秒再开始对话，给前端 SSE 连接建立留出时间
+            await asyncio.sleep(2.0)
+            await eng.run_session(session)
+        finally:
+            _running_sessions.discard(session.session_id)
+
+    asyncio.create_task(run_with_cleanup())
 
     return {
         "session_id": session.session_id,
@@ -265,15 +305,17 @@ async def create_dating_session(body: CreateSessionRequest) -> dict:
                 profiles[AgentRole.FEMALE].expectation = body.female.expectation
     # 表单档案（未用 SecondMe 或补充）
     if body.male:
-        # 如果已有 SecondMe 档案，只更新 expectation（如果提供了）
-        if AgentRole.MALE in profiles and body.male.expectation:
-            profiles[AgentRole.MALE].expectation = body.male.expectation
+        if AgentRole.MALE in profiles:
+            # SecondMe 档案已有，只选择性更新 expectation（不覆盖整个档案）
+            if body.male.expectation:
+                profiles[AgentRole.MALE].expectation = body.male.expectation
         else:
             profiles[AgentRole.MALE] = _profile_from_input(AgentRole.MALE, body.male)
     if body.female:
-        # 如果已有 SecondMe 档案，只更新 expectation（如果提供了）
-        if AgentRole.FEMALE in profiles and body.female.expectation:
-            profiles[AgentRole.FEMALE].expectation = body.female.expectation
+        if AgentRole.FEMALE in profiles:
+            # SecondMe 档案已有，只选择性更新 expectation（不覆盖整个档案）
+            if body.female.expectation:
+                profiles[AgentRole.FEMALE].expectation = body.female.expectation
         else:
             profiles[AgentRole.FEMALE] = _profile_from_input(AgentRole.FEMALE, body.female)
     if body.male_parent:
@@ -406,9 +448,10 @@ async def stream_events(session_id: str) -> StreamingResponse:
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=300.0)
-                    if event.get("type") == "summary":
-                        pusher.unsubscribe(session_id, callback)
                     yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+                    # summary 事件后结束 SSE 连接，避免资源泄漏
+                    if event.get("type") == "summary":
+                        return
                 except asyncio.TimeoutError:
                     yield "data: {\"type\":\"heartbeat\"}\n\n"
         finally:

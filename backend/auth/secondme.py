@@ -24,7 +24,7 @@ except ImportError:
 # 与 Second-Me-Skills 一致
 SECONDME_OAUTH_URL = "https://go.second.me/oauth/"
 SECONDME_API_BASE = "https://app.mindos.com/gate/lab"
-SCOPES = ["user.info", "user.info.shades"]
+SCOPES = ["user.info", "user.info.shades", "user.info.softmemory"]
 
 
 def get_config() -> dict[str, str]:
@@ -113,28 +113,46 @@ async def fetch_user_info(access_token: str) -> dict[str, Any]:
     if not HAS_HTTPX:
         raise RuntimeError("请安装 httpx: pip install httpx")
     headers = {"Authorization": f"Bearer {access_token}"}
+
+    # 所有请求共用一个 AsyncClient，避免连接泄漏
     async with httpx.AsyncClient(timeout=15.0) as client:
+        # 1. 拉取基本用户信息
         info_r = await client.get(
             f"{SECONDME_API_BASE}/api/secondme/user/info",
             headers=headers,
         )
-    info_data = info_r.json()
-    if info_data.get("code") != 0 or not info_data.get("data"):
-        raise ValueError(info_data.get("message", "获取用户信息失败"))
-    user = info_data["data"]
+        info_data = info_r.json()
+        if info_data.get("code") != 0 or not info_data.get("data"):
+            raise ValueError(info_data.get("message", "获取用户信息失败"))
+        user = info_data["data"]
 
-    # 可选：拉取兴趣标签
-    try:
-        shades_r = await httpx.AsyncClient(timeout=10.0).get(
-            f"{SECONDME_API_BASE}/api/secondme/user/shades",
-            headers=headers,
-        )
-        shades_data = shades_r.json()
-        if shades_data.get("code") == 0 and shades_data.get("data"):
-            user["shades"] = shades_data["data"].get("shades", [])
-        else:
+        # 2. 可选：拉取兴趣标签
+        try:
+            shades_r = await client.get(
+                f"{SECONDME_API_BASE}/api/secondme/user/shades",
+                headers=headers,
+            )
+            shades_data = shades_r.json()
+            if shades_data.get("code") == 0 and shades_data.get("data"):
+                user["shades"] = shades_data["data"].get("shades", [])
+            else:
+                user["shades"] = []
+        except Exception:
             user["shades"] = []
-    except Exception:
-        user["shades"] = []
+
+        # 3. 可选：拉取软记忆（个人知识库）
+        try:
+            softmemory_r = await client.get(
+                f"{SECONDME_API_BASE}/api/secondme/user/softmemory",
+                headers=headers,
+                params={"pageNo": 1, "pageSize": 50},
+            )
+            softmemory_data = softmemory_r.json()
+            if softmemory_data.get("code") == 0 and softmemory_data.get("data"):
+                user["softmemory"] = softmemory_data["data"].get("list", [])
+            else:
+                user["softmemory"] = []
+        except Exception:
+            user["softmemory"] = []
 
     return user

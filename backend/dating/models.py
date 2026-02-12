@@ -51,7 +51,7 @@ class DatingProfile:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_prompt_text(self) -> str:
-        """用于 LLM 的角色设定文本。"""
+        """用于 LLM 的角色设定文本。包含 SecondMe 用户的完整信息。"""
         parts = [
             f"角色：{ROLE_DISPLAY_NAMES.get(self.role, self.role.value)}",
             f"称呼：{self.display_name}",
@@ -72,6 +72,22 @@ class DatingProfile:
             parts.append(f"对另一半/对子女对象期望：{self.expectation}")
         if self.extra:
             parts.append(f"其他：{self.extra}")
+        
+        # 如果是 SecondMe 用户，添加软记忆信息（让 AI 更了解用户）
+        if self.metadata.get("source") == "secondme":
+            softmemory = self.metadata.get("softmemory", [])
+            if softmemory:
+                parts.append("\n【个人知识库（软记忆）】")
+                for mem in softmemory[:15]:  # 最多15条软记忆
+                    fact_object = mem.get("factObject", "")
+                    fact_content = mem.get("factContent", "")
+                    if fact_object and fact_content:
+                        parts.append(f"- {fact_object}：{fact_content}")
+            
+            self_intro = self.metadata.get("selfIntroduction")
+            if self_intro:
+                parts.append(f"\n【自我介绍】{self_intro}")
+        
         return "\n".join(parts)
 
 

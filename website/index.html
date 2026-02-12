@@ -242,6 +242,24 @@ img{display:block;max-width:100%}
 .attr-card .attr-row{margin-bottom:20px}
 .attr-card .attr-label{font-size:.8rem;color:var(--text3);margin-bottom:6px;font-weight:700;letter-spacing:.05em}
 .attr-card .attr-value{font-size:1.1rem;font-weight:600;color:var(--text)}
+
+/* 性别选择按钮组 */
+.gender-picker{display:flex;gap:12px;margin-top:4px}
+.gender-btn{
+  flex:1;padding:12px 0;border:2px solid var(--bg2);border-radius:var(--r);
+  background:#fff;font-size:1rem;font-weight:600;cursor:pointer;transition:var(--tr);
+  color:var(--text2);text-align:center
+}
+.gender-btn:hover{border-color:var(--rose);color:var(--rose);background:#fff5f7}
+.gender-btn.active[data-gender="male"]{
+  border-color:#3b82f6;background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#2563eb;
+  box-shadow:0 2px 12px rgba(59,130,246,.15)
+}
+.gender-btn.active[data-gender="female"]{
+  border-color:var(--rose);background:linear-gradient(135deg,#fff5f7,#ffe4ea);color:var(--rose);
+  box-shadow:0 2px 12px rgba(244,63,94,.15)
+}
+
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .tag{
   padding:6px 16px;background:var(--surface2);color:var(--rose);
@@ -315,6 +333,14 @@ img{display:block;max-width:100%}
   text-align:center;cursor:pointer;transition:var(--tr)
 }
 .npc-card-btn:hover{background:var(--rose);color:#fff}
+
+/* 真实用户卡片样式（区别于 NPC） */
+.real-user-card{border-color:rgba(139,92,246,.2);background:linear-gradient(135deg,#faf5ff,#fff)}
+.real-user-card:hover{box-shadow:0 8px 32px rgba(139,92,246,.15);border-color:rgba(139,92,246,.3)}
+.npc-role-badge.real{background:linear-gradient(135deg,#f5f3ff,#ede9fe);color:var(--purple);font-weight:700}
+.real-avatar{border:3px solid var(--purple)!important;box-shadow:0 4px 12px rgba(139,92,246,.15)!important}
+.real-user-card .npc-card-btn{background:linear-gradient(135deg,#f5f3ff,#ede9fe);color:var(--purple)}
+.real-user-card .npc-card-btn:hover{background:var(--purple);color:#fff}
 
 /* 自动匹配区 - 更炫酷 */
 .auto-match-card{
@@ -399,13 +425,65 @@ img{display:block;max-width:100%}
 .c-seat .c-name{font-size:.95rem;font-weight:700;color:var(--text)}
 .c-seat .c-avatar:hover{transform:scale(1.05);box-shadow:0 12px 32px rgba(225,29,72,.15)}
 
-/* 操作按钮 */
-.room-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px 0;position:relative;z-index:1}
-.room-actions .btn{padding:10px 20px;font-size:.9rem;border-radius:99px;background:#fff;border:1px solid var(--bg2);box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.room-actions .btn:hover{background:#fff0f2;color:var(--rose);border-color:var(--rose)}
-.btn-tui{background:linear-gradient(135deg,var(--rose),#f43f5e)!important;color:#fff!important;border:none!important;font-weight:700!important;box-shadow:0 4px 16px rgba(225,29,72,.3)!important}
-.btn-tui:hover{transform:scale(1.05)!important}
+/* 进度 + 好感度/容忍度面板 */
+.room-status-panel{position:relative;z-index:1;margin:16px auto;max-width:500px;padding:0 16px}
+.room-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.room-progress-label{font-size:.78rem;color:var(--text3);font-weight:600;white-space:nowrap}
+.room-progress-bar{flex:1;height:6px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.room-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--rose));border-radius:99px;transition:width .6s ease}
+.room-progress-text{font-size:.78rem;color:var(--text2);font-weight:700;white-space:nowrap}
 
+.room-meters{display:flex;gap:16px}
+.meter{flex:1;position:relative}
+.meter-header{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.meter-icon{font-size:.9rem}
+.meter-label{font-size:.75rem;color:var(--text3);font-weight:600}
+.meter-value{margin-left:auto;font-size:.8rem;font-weight:700;font-variant-numeric:tabular-nums}
+.meter-love .meter-value{color:var(--rose)}
+.meter-tolerate .meter-value{color:#ef4444}
+.meter-bar{height:8px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.meter-fill{height:100%;border-radius:99px;transition:width .5s ease}
+.love-fill{background:linear-gradient(90deg,#fda4af,var(--rose))}
+.tolerate-fill{background:linear-gradient(90deg,#fbbf24,#ef4444)}
+
+.meter-btn{
+  position:absolute;right:0;top:-2px;width:28px;height:28px;border-radius:50%;
+  border:1.5px solid var(--bg2);background:#fff;cursor:pointer;font-size:.7rem;
+  display:flex;align-items:center;justify-content:center;transition:var(--tr);
+  box-shadow:0 2px 6px rgba(0,0,0,.06);padding:0;line-height:1
+}
+.meter-btn:hover{transform:scale(1.15);box-shadow:0 3px 12px rgba(0,0,0,.1)}
+.meter-btn-love:hover{border-color:var(--rose);background:#fff0f2}
+.meter-btn-tolerate:hover{border-color:#ef4444;background:#fef2f2}
+
+.room-notice{text-align:center;font-size:.72rem;color:var(--text3);letter-spacing:.15em;margin:10px 0 2px;opacity:.6}
+
+/* 好感度爱心特效 */
+.love-burst{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+.love-burst .heart{
+  position:absolute;font-size:2rem;animation:heartFloat 2s ease-out forwards;opacity:0
+}
+@keyframes heartFloat{
+  0%{transform:translateY(0) scale(0);opacity:1}
+  50%{opacity:1;transform:translateY(-80px) scale(1.3)}
+  100%{transform:translateY(-200px) scale(.6);opacity:0}
+}
+
+/* 退退退特效容器 */
+.tui-fullscreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;
+  background:rgba(239,68,68,.08);display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s
+}
+.tui-fullscreen.show{opacity:1;pointer-events:auto}
+.tui-fullscreen .tui-text{
+  font-size:3rem;font-weight:900;color:#ef4444;
+  animation:tuiShake .15s infinite alternate;text-shadow:0 4px 20px rgba(239,68,68,.3)
+}
+@keyframes tuiShake{
+  from{transform:translateX(-4px) rotate(-2deg)}
+  to{transform:translateX(4px) rotate(2deg)}
+}
 /* 长辈区 */
 .elders{display:flex;justify-content:space-between;margin-top:28px;padding:0 12px;position:relative;z-index:1}
 .elder-side{display:flex;gap:12px}
@@ -421,7 +499,7 @@ img{display:block;max-width:100%}
 
 /* 聊天记录 - 对话泡风格 */
 .chat-log{
-  max-height:240px;overflow-y:auto;margin-top:24px;padding:16px;
+  max-height:400px;overflow-y:auto;margin-top:24px;padding:16px;
   background:#fafafa;border-radius:var(--r);font-size:.95rem;position:relative;z-index:1;
   border:1px solid var(--bg2)
 }
@@ -436,16 +514,7 @@ img{display:block;max-width:100%}
 @keyframes blink{50%{opacity:0}}
 
 /* 退退退弹窗 */
-.tui-popup{position:fixed;inset:0;background:rgba(255,255,255,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}
-.tui-popup.show{display:flex}
-.tui-popup .tui-box{
-  background:#fff;border:4px solid var(--rose);padding:48px;border-radius:var(--r-xl);
-  text-align:center;box-shadow:0 20px 60px rgba(225,29,72,.2);
-  animation:tuiBounce .5s cubic-bezier(.34,1.56,.64,1)
-}
-@keyframes tuiBounce{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
-.tui-popup .tui-img{width:100px;height:100px;margin:0 auto 20px;object-fit:contain}
-.tui-popup .tui-word{font-size:2.4rem;font-weight:900;color:var(--rose);letter-spacing:.15em}
+/* (旧 tui-popup 已移除，新特效使用 .love-burst 和 .tui-fullscreen) */
 
 /* ============================================================
    5. 结算页 — 游戏通关
@@ -527,6 +596,14 @@ img{display:block;max-width:100%}
     </div>
     <div class="card attr-card">
       <div class="section-title">📋 属性卡片</div>
+      <div class="attr-row">
+        <div class="attr-label">性别</div>
+        <div class="gender-picker" id="gender-picker">
+          <button type="button" class="gender-btn" data-gender="male">♂ 男生</button>
+          <button type="button" class="gender-btn" data-gender="female">♀ 女生</button>
+        </div>
+        <div style="font-size:.75rem;color:var(--text3);margin-top:6px">请选择你的性别，AI 会根据此匹配异性嘉宾</div>
+      </div>
       <div class="attr-row">
         <div class="attr-label">职业</div>
         <div class="attr-value" id="attr-job">—</div>
@@ -630,15 +707,38 @@ img{display:block;max-width:100%}
       </div>
     </div>
 
-    <div class="room-actions">
-      <button type="button" class="btn btn-outline" data-act="wave">👋 挥手</button>
-      <button type="button" class="btn btn-outline" data-act="nod">😊 点头</button>
-      <button type="button" class="btn btn-outline" data-act="heart">💗 比心</button>
-      <button type="button" class="btn btn-outline" data-act="leave">😅 尴尬离场</button>
-      <button type="button" class="btn btn-tui" id="btn-tui">🙅 退退退</button>
+    <!-- 进度 + 好感度/容忍度面板 -->
+    <div class="room-status-panel">
+      <div class="room-progress">
+        <span class="room-progress-label">对话进度</span>
+        <div class="room-progress-bar"><div class="room-progress-fill" id="room-progress-fill" style="width:0%"></div></div>
+        <span class="room-progress-text" id="room-progress-text">0 / 6 轮</span>
+      </div>
+      <div class="room-meters">
+        <div class="meter meter-love">
+          <div class="meter-header">
+            <span class="meter-icon">💗</span>
+            <span class="meter-label">好感度</span>
+            <span class="meter-value" id="love-value">0%</span>
+          </div>
+          <div class="meter-bar"><div class="meter-fill love-fill" id="love-fill" style="width:0%"></div></div>
+          <button type="button" class="meter-btn meter-btn-love" id="btn-love-boost" title="手动增加好感度">+💗</button>
+        </div>
+        <div class="meter meter-tolerate">
+          <div class="meter-header">
+            <span class="meter-icon">💢</span>
+            <span class="meter-label">容忍度</span>
+            <span class="meter-value" id="tolerate-value">0%</span>
+          </div>
+          <div class="meter-bar"><div class="meter-fill tolerate-fill" id="tolerate-fill" style="width:0%"></div></div>
+          <button type="button" class="meter-btn meter-btn-tolerate" id="btn-tolerate-boost" title="手动增加容忍度">+💢</button>
+        </div>
+      </div>
     </div>
 
-    <div style="text-align:center;margin-top:8px">
+    <div class="room-notice">虚拟相亲 · 非诚勿扰</div>
+
+    <div style="text-align:center;margin-top:4px">
       <button type="button" class="btn btn-ghost" id="btn-exit-room-bottom">← 退出房间</button>
     </div>
 
@@ -660,12 +760,11 @@ img{display:block;max-width:100%}
     <div class="chat-log" id="chat-log-room"></div>
   </div>
 
-  <div class="tui-popup" id="tui-popup">
-    <div class="tui-box">
-      <img class="tui-img" src="images/tui.png" alt=""
-           onerror="this.style.display='none';" />
-      <div class="tui-word">退！退！退！</div>
-    </div>
+  <!-- 好感度满爱心特效 -->
+  <div class="love-burst" id="love-burst"></div>
+  <!-- 容忍度满退退退特效 -->
+  <div class="tui-fullscreen" id="tui-fullscreen">
+    <div class="tui-text">🙅 退！退！退！🙅</div>
   </div>
 </div>
 
@@ -693,6 +792,8 @@ img{display:block;max-width:100%}
 const API_BASE = '';
 let authSessionId = null;
 let myProfile = null;
+let myGender = 'male'; // 默认男性，用户可在档案页修改
+let currentSessionId = null; // 当前相亲会话 ID
 
 /* ---- 工具函数 ---- */
 function showLoader(text) {
@@ -709,7 +810,11 @@ function toast(msg, type) {
   const c = document.getElementById('toasts');
   const t = document.createElement('div');
   t.className = 'toast ' + (type || 'ok');
-  t.innerHTML = '<span class="dot"></span>' + msg;
+  // 使用 textContent 防止 XSS（msg 可能来自后端 error.detail）
+  var dot = document.createElement('span');
+  dot.className = 'dot';
+  t.appendChild(dot);
+  t.appendChild(document.createTextNode(msg));
   c.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(60px)'; setTimeout(() => t.remove(), 300); }, 3000);
 }
@@ -718,8 +823,23 @@ function showPage(id) {
   const el = document.getElementById(id);
   if (el) {
     el.classList.add('active');
-    // 立即滚动到顶部，不使用 smooth 动画，避免"下拉"效果
+    // 立即滚动到顶部，确保新页面内容直接显示在顶部可见区域
+    // 使用多种方式确保滚动生效
     window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    // 使用 requestAnimationFrame 确保 DOM 更新后再滚动
+    requestAnimationFrame(function() {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      // 如果页面有动画，等待动画完成后再确保滚动位置
+      setTimeout(function() {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 100);
+    });
   }
 }
 function getLoginUrl() {
@@ -814,6 +934,17 @@ document.getElementById('btn-secondme-login').addEventListener('click', function
           
           // 登录成功后，立即切换到档案页
           showPage('page-profile');
+          // 确保页面滚动到顶部，新页面内容直接显示在顶部可见区域
+          setTimeout(function() {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            // 确保页面元素在顶部可见
+            var profilePage = document.getElementById('page-profile');
+            if (profilePage) {
+              profilePage.scrollIntoView({ behavior: 'instant', block: 'start' });
+            }
+          }, 100);
           toast('登录成功，分身已同步！');
         } else if (hint && session) {
           hideLoader();
@@ -881,7 +1012,25 @@ function fillProfilePage(data) {
     const url = data.avatar_url || p.avatar_url;
     if (url) box.querySelector('img').src = url;
   }
+  // 回显性别（如果后端返回了 gender 字段）
+  if (data.gender) {
+    setGenderSelection(data.gender);
+  }
 }
+
+/* 性别选择交互 */
+function setGenderSelection(gender) {
+  myGender = gender;
+  document.querySelectorAll('.gender-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.gender === gender);
+  });
+}
+
+document.getElementById('gender-picker').addEventListener('click', function(e) {
+  var btn = e.target.closest('.gender-btn');
+  if (!btn) return;
+  setGenderSelection(btn.dataset.gender);
+});
 
 function escapeHtml(s) {
   const d = document.createElement('div');
@@ -896,7 +1045,19 @@ document.getElementById('my-avatar').addEventListener('click', function() {
 });
 document.getElementById('btn-to-lobby').addEventListener('click', function() {
   showLoader('正在进入大厅...');
-  setTimeout(() => { showPage('page-lobby'); fetchLobby(); hideLoader(); }, 300);
+  // 进入大厅前，通知后端更新用户的性别
+  if (authSessionId) {
+    fetch(API_BASE + '/api/dating/lobby/update-gender', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: authSessionId, gender: myGender })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function() { showPage('page-lobby'); fetchLobby(); hideLoader(); })
+    .catch(function() { showPage('page-lobby'); fetchLobby(); hideLoader(); });
+  } else {
+    setTimeout(function() { showPage('page-lobby'); fetchLobby(); hideLoader(); }, 300);
+  }
 });
 document.getElementById('btn-back-from-profile').addEventListener('click', () => showPage('page-home'));
 document.getElementById('btn-back-from-lobby').addEventListener('click', () => showPage(myProfile ? 'page-profile' : 'page-home'));
@@ -913,28 +1074,51 @@ function escapeAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</
 function renderNpcGrid() {
   var el = document.getElementById('npc-grid');
   if (!el) return;
-  if (!lobbyNpcs.length) {
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">暂无嘉宾</div>';
+  // 过滤：只显示异性嘉宾，排除自己
+  var oppositeGender = (myGender === 'male') ? 'female' : 'male';
+  var filtered = lobbyNpcs.filter(function(n) {
+    // 排除自己（通过 user_ 前缀 + userId 匹配）
+    if (n.id && n.id.indexOf('user_') === 0 && authSessionId) {
+      // 真实用户卡片不需要排除（我们无法精确判断 user_id 与 session_id 的对应关系）
+      // 但同性别的一律排除
+    }
+    return n.role === oppositeGender;
+  });
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">暂无异性嘉宾，请稍后再来</div>';
     return;
   }
-  el.innerHTML = lobbyNpcs.map(function(n, i) {
+  // 将真实用户排在前面，NPC 在后面
+  var sorted = filtered.slice().sort(function(a, b) {
+    if (a.is_real_user && !b.is_real_user) return -1;
+    if (!a.is_real_user && b.is_real_user) return 1;
+    return 0;
+  });
+  el.innerHTML = sorted.map(function(n, i) {
     var hobbies = (n.hobbies||'').split(/[,，、]/).filter(Boolean).slice(0,4);
+    var isReal = n.is_real_user;
     var avatarHtml = n.avatar_url
       ? '<img src="' + escapeAttr(n.avatar_url) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + (n.role==='male'?'🧑':'👩') + '\'" />'
       : (n.role === 'male' ? '🧑' : '👩');
     var tagHtml = hobbies.map(function(t){ return '<span class="ntag">' + escapeAttr(t.trim()) + '</span>'; }).join('');
-    return '<div class="npc-card" data-npc-id="' + escapeAttr(n.id) + '" style="animation:pageIn .35s ease '+(i*.06)+'s both">' +
-      '<span class="npc-role-badge ' + n.role + '">' + (n.role==='male'?'♂ 男嘉宾':'♀ 女嘉宾') + '</span>' +
+    // 真实用户有特殊样式标记
+    var cardClass = 'npc-card' + (isReal ? ' real-user-card' : '');
+    var badgeText = isReal
+      ? '✨ SecondMe 用户'
+      : (n.role==='male'?'♂ 男嘉宾':'♀ 女嘉宾');
+    var badgeClass = isReal ? 'npc-role-badge real' : ('npc-role-badge ' + n.role);
+    return '<div class="' + cardClass + '" data-npc-id="' + escapeAttr(n.id) + '" style="animation:pageIn .35s ease '+(i*.06)+'s both">' +
+      '<span class="' + badgeClass + '">' + badgeText + '</span>' +
       '<div class="npc-card-body">' +
         '<div class="npc-card-top">' +
-          '<div class="npc-avatar">' + avatarHtml + '</div>' +
+          '<div class="npc-avatar' + (isReal ? ' real-avatar' : '') + '">' + avatarHtml + '</div>' +
           '<div class="npc-info"><div class="npc-name">' + escapeAttr(n.display_name) + '</div>' +
-          '<div class="npc-desc">' + escapeAttr(n.desc || (n.age+'岁 · '+n.occupation)) + '</div></div>' +
+          '<div class="npc-desc">' + escapeAttr(n.desc || (n.age ? n.age+'岁 · ' : '') + (n.occupation||'')) + '</div></div>' +
         '</div>' +
         '<div class="npc-tags">' + tagHtml + '</div>' +
         (n.expectation ? '<div class="npc-expect">💬 ' + escapeAttr(n.expectation) + '</div>' : '') +
       '</div>' +
-      '<div class="npc-card-btn">选 TA 相亲 →</div>' +
+      '<div class="npc-card-btn">' + (isReal ? '和 TA 的分身聊聊 →' : '选 TA 相亲 →') + '</div>' +
     '</div>';
   }).join('');
 
@@ -967,11 +1151,12 @@ function fetchLobby() {
 function startMatchWithNpc(npc) {
   showLoader('月老正在安排相亲间...');
   var payload = buildSessionPayload();
-  // 根据 NPC 性别设置对手档案
+  // 根据 NPC 性别设置对手档案（填入对手侧）
+  var npcInfo = { display_name: npc.display_name, occupation: npc.occupation||'', hobbies: npc.hobbies||'', extra: npc.extra||'', expectation: npc.expectation||'' };
   if (npc.role === 'female') {
-    payload.female = { display_name: npc.display_name, occupation: npc.occupation||'', hobbies: npc.hobbies||'', extra: npc.extra||'' };
+    payload.female = npcInfo;
   } else {
-    payload.male = { display_name: npc.display_name, occupation: npc.occupation||'', hobbies: npc.hobbies||'', extra: npc.extra||'' };
+    payload.male = npcInfo;
   }
   payload.target_user_id = npc.id;
   fetch(API_BASE + '/api/dating/sessions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
@@ -1077,53 +1262,86 @@ function buildSessionPayload() {
   // 获取用户输入的相亲要求
   var expectationEl = document.getElementById('attr-expectation');
   var userExpectation = expectationEl ? (expectationEl.value || '').trim() : '';
-  
+  var isMale = (myGender === 'male');
+
+  var myInfo = myProfile && myProfile.profile
+    ? { 
+        display_name: myProfile.name || myProfile.profile.display_name, 
+        occupation: myProfile.profile.occupation||'', 
+        hobbies: myProfile.profile.hobbies||'', 
+        extra: myProfile.profile.extra||'',
+        expectation: userExpectation || myProfile.profile.expectation || ''
+      }
+    : { display_name: '我', expectation: userExpectation };
+
   var p = {
-    male: myProfile && myProfile.profile
-      ? { 
-          display_name: myProfile.name || myProfile.profile.display_name, 
-          occupation: myProfile.profile.occupation||'', 
-          hobbies: myProfile.profile.hobbies||'', 
-          extra: myProfile.profile.extra||'',
-          expectation: userExpectation || myProfile.profile.expectation || '' // 优先使用用户输入的，否则用 SecondMe 同步的
-        }
-      : { display_name: '我', expectation: userExpectation },
-    female: { display_name: '女方' },
-    male_parent: { display_name: '我的家长' },
-    female_parent: { display_name: '女方家长' },
-    max_rounds: 6
+    male: isMale ? myInfo : { display_name: '男方' },
+    female: isMale ? { display_name: '女方' } : myInfo,
+    male_parent: { display_name: isMale ? '我的家长' : '男方家长' },
+    female_parent: { display_name: isMale ? '女方家长' : '我的家长' },
+    max_rounds: 6,
+    user_gender: myGender  // 告知后端用户选择的性别
   };
-  if (authSessionId) p.secondme_male_session_id = authSessionId;
+
+  // 根据性别设置 SecondMe session id
+  if (authSessionId) {
+    if (isMale) {
+      p.secondme_male_session_id = authSessionId;
+    } else {
+      p.secondme_female_session_id = authSessionId;
+    }
+  }
   return p;
 }
 
 /* 通用：进入相亲间 */
 function enterRoom(sessionId, payload, matchedNpc) {
+  currentSessionId = sessionId; // 保存当前会话 ID
+  resetRoomMeters(); // 重置好感度/容忍度/进度
   showPage('page-room');
-  var myName = (payload.male && payload.male.display_name) || '我';
-  var otherName = matchedNpc ? matchedNpc.display_name : ((payload.female && payload.female.display_name) || '对方');
-  document.getElementById('room-male-name').textContent = myName;
-  document.getElementById('room-female-name').textContent = otherName;
+  var isMale = (myGender === 'male');
+  var myName = isMale
+    ? ((payload.male && payload.male.display_name) || '我')
+    : ((payload.female && payload.female.display_name) || '我');
+  var otherName = matchedNpc ? matchedNpc.display_name
+    : (isMale ? ((payload.female && payload.female.display_name) || '对方')
+              : ((payload.male && payload.male.display_name) || '对方'));
+  document.getElementById('room-male-name').textContent = isMale ? myName : otherName;
+  document.getElementById('room-female-name').textContent = isMale ? otherName : myName;
+
+  // 更新相亲间头像
+  try {
+    var myAvatarEl = document.getElementById(isMale ? 'room-male' : 'room-female');
+    var otherAvatarEl = document.getElementById(isMale ? 'room-female' : 'room-male');
+    if (myProfile && (myProfile.avatar_url || (myProfile.profile && myProfile.profile.avatar_url))) {
+      var myUrl = myProfile.avatar_url || myProfile.profile.avatar_url;
+      if (myUrl && myAvatarEl) myAvatarEl.querySelector('img').src = myUrl;
+    }
+    if (matchedNpc && matchedNpc.avatar_url && otherAvatarEl) {
+      otherAvatarEl.querySelector('img').src = matchedNpc.avatar_url;
+    }
+  } catch(_) {}
+
   startRoomEvents(sessionId);
   toast('相亲间已就绪，AI 正在热场...');
 }
 
 /* ---- 5. 相亲间事件 ---- */
-function startRoomEvents(sessionId) {
+function startRoomEvents(sessionId, opts) {
+  opts = opts || {};
   const logEl = document.getElementById('chat-log-room');
   if (!logEl) return;
-  logEl.innerHTML = '';
+  // 仅首次进入时清空聊天记录（重连时保留已有消息）
+  if (!opts.isReconnect) logEl.innerHTML = '';
   // 关闭旧连接
   if (window._currentEvt) { try { window._currentEvt.close(); } catch(_) {} }
   var eventQueue = [], isTyping = false, currentEvt = null;
+  window._sseIntentionalClose = false; // 标记主动关闭，防止 onerror 触发重连
   function scrollToBottom() { logEl.scrollTop = logEl.scrollHeight; }
   function typeInto(container, text, opts, done) {
     opts = opts || {};
-    // 模拟真人打字速度：每分钟约 40-50 字，每个字符约 120-150ms
-    // 根据文本长度动态调整速度，短文本稍快，长文本稍慢
-    var baseSpeed = opts.speed || 130;
+    var baseSpeed = opts.speed || 85;
     var textLength = text.length;
-    // 短文本（<20字）稍快，长文本（>50字）稍慢，模拟真人打字时的节奏变化
     var dynamicSpeed = textLength < 20 ? baseSpeed * 0.9 : (textLength > 50 ? baseSpeed * 1.1 : baseSpeed);
     var chunk = opts.chunk || 1, idx = 0;
     var cursor = document.createElement('span');
@@ -1134,10 +1352,9 @@ function startRoomEvents(sessionId) {
       var end = Math.min(idx + chunk, text.length);
       container.insertBefore(document.createTextNode(text.slice(idx, end)), cursor);
       idx = end; scrollToBottom();
-      // 偶尔添加随机延迟，模拟真人打字的自然停顿（标点符号后稍长停顿）
       var delay = dynamicSpeed;
       if (idx > 0 && text[idx - 1] && /[，。！？、]/.test(text[idx - 1])) {
-        delay = dynamicSpeed * 1.5; // 标点后停顿稍长
+        delay = dynamicSpeed * 1.3;
       }
       setTimeout(tick, delay);
     })();
@@ -1152,20 +1369,15 @@ function startRoomEvents(sessionId) {
       logEl.appendChild(wrap);
       var sp = document.createElement('span'); wrap.appendChild(sp);
       isTyping = true;
-      // 轮次提示稍快一些，因为通常比较短
-      typeInto(sp, item.goal || '', { speed: 120 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
+      typeInto(sp, item.goal || '', { speed: 75 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
     } else if (item.type === 'message') {
-      // 模拟真人思考时间：在显示消息前添加 0.8-1.5 秒的随机延迟
-      var thinkTime = 800 + Math.random() * 700; // 0.8-1.5秒随机思考时间
-      // 先显示消息容器（带名字），但内容稍后显示，模拟思考过程
+      var thinkTime = 500 + Math.random() * 500;
       wrap.innerHTML = '<strong>' + escapeHtml(item.display_name || item.role || '') + '：</strong> ';
       logEl.appendChild(wrap);
-      // 立即设置 isTyping = true，防止在思考期间处理下一个消息
       isTyping = true;
       setTimeout(function() {
         var sp = document.createElement('span'); wrap.appendChild(sp);
-        // 消息内容使用正常交流速度，模拟真人打字（每分钟约40-50字）
-        typeInto(sp, item.content || '', { speed: 130 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
+        typeInto(sp, item.content || '', { speed: 85 }, () => { isTyping = false; scrollToBottom(); processQueue(); });
       }, thinkTime);
     } else if (item.type === 'summary') {
       wrap.style.cssText = 'background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.2)';
@@ -1173,43 +1385,52 @@ function startRoomEvents(sessionId) {
       var sp = document.createElement('span'); wrap.appendChild(sp);
       logEl.appendChild(wrap);
       isTyping = true;
-      // 总结文本稍慢一些，因为通常比较长且重要
-      typeInto(sp, item.summary_text || '', { speed: 140 }, () => {
-        isTyping = false; scrollToBottom(); currentEvt.close();
+      typeInto(sp, item.summary_text || '', { speed: 95 }, () => {
+        isTyping = false; scrollToBottom();
+        // 标记主动关闭，阻止 onerror 触发重连
+        window._sseIntentionalClose = true;
+        if (currentEvt) currentEvt.close();
         setTimeout(() => showPage('page-result'), 1200);
       });
     }
   }
-  function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-  
-  // 启动会话（忽略错误，因为可能已经启动）
-  fetch(API_BASE + '/api/dating/sessions/' + sessionId + '/start', { method: 'POST' })
-    .catch(function(err) { console.warn('启动会话失败（可能已启动）:', err); });
-  
-  // 建立 SSE 连接
+
+  // 先建立 SSE 连接，连接成功后再启动会话（避免竞态丢失初始事件）
   currentEvt = new EventSource(API_BASE + '/api/dating/sessions/' + sessionId + '/events');
   window._currentEvt = currentEvt;
+
+  currentEvt.onopen = function() {
+    // SSE 连接已建立，现在安全地启动会话
+    fetch(API_BASE + '/api/dating/sessions/' + sessionId + '/start', { method: 'POST' })
+      .catch(function(err) { console.warn('启动会话失败（可能已启动）:', err); });
+  };
+
   currentEvt.onerror = function(e) {
+    // 如果是主动关闭（如 summary 后或退出房间），不做任何处理
+    if (window._sseIntentionalClose) return;
     console.error('EventSource 错误:', e);
     if (currentEvt.readyState === EventSource.CLOSED) {
-      toast('连接已断开，请刷新页面重试', 'err');
-      // 尝试重新连接
+      toast('连接已断开', 'err');
+      // 仅尝试一次重连，避免无限循环
       setTimeout(function() {
-        if (currentEvt.readyState === EventSource.CLOSED) {
+        if (!window._sseIntentionalClose && currentEvt.readyState === EventSource.CLOSED) {
           toast('正在重新连接...', 'ok');
-          startRoomEvents(sessionId);
+          startRoomEvents(sessionId, { isReconnect: true });
         }
       }, 3000);
     }
   };
+
   currentEvt.onmessage = function(e) {
     try {
       var data = JSON.parse(e.data);
-      // 忽略心跳消息
       if (data.type === 'heartbeat') return;
       
       if (data.type === 'round_start') {
         eventQueue.push({ type: 'round_start', round: data.round, goal: data.goal || '' });
+        // 更新进度（后端会传 max_rounds）
+        if (data.max_rounds) roomMaxRounds = data.max_rounds;
+        updateProgress(data.round || 1, roomMaxRounds);
       } else if (data.type === 'message') {
         eventQueue.push({ 
           type: 'message', 
@@ -1217,8 +1438,28 @@ function startRoomEvents(sessionId) {
           role: data.role || '', 
           content: data.content || '' 
         });
+        // 根据消息内容动态调整好感度/容忍度（模拟情感变化）
+        var content = (data.content || '').toLowerCase();
+        var loveKeywords = ['喜欢', '有趣', '哈哈', '太巧了', '一样', '好感', '不错', '挺好', '开心', '期待', '共同', '志同道合', '欣赏', '优秀', '温柔', '可爱'];
+        var annoyKeywords = ['不太', '算了', '还好吧', '一般', '不合适', '分歧', '不同意', '呵呵', '尴尬', '无语', '离谱'];
+        var loveHit = loveKeywords.some(function(k){ return content.indexOf(k) >= 0; });
+        var annoyHit = annoyKeywords.some(function(k){ return content.indexOf(k) >= 0; });
+        // 好感度：每条消息基础增加 1-3%，正面关键词额外 +2-4%，负面关键词减少
+        // 设计目标：4轮对话（约16条消息）自然达到 60-80%，不会轻易自动满
+        var baseLove = 1 + Math.random() * 2;
+        if (loveHit) baseLove += 2 + Math.random() * 2;
+        if (annoyHit) baseLove = Math.max(0, baseLove - 2);
+        updateMeter('love', roomLove + baseLove);
+        // 容忍度：增长更慢，每条消息 0-1%，负面关键词额外 +3-6%
+        var baseTolerate = Math.random() * 1;
+        if (annoyHit) baseTolerate += 3 + Math.random() * 3;
+        updateMeter('tolerate', roomTolerate + baseTolerate);
       } else if (data.type === 'summary') {
         eventQueue.push({ type: 'summary', summary_text: data.summary_text || '' });
+        // 总结时进度拉满
+        updateProgress(roomMaxRounds, roomMaxRounds);
+      } else {
+        console.warn('未知 SSE 事件类型:', data.type);
       }
       processQueue();
     } catch (err) {
@@ -1227,19 +1468,100 @@ function startRoomEvents(sessionId) {
   };
 }
 
-/* ---- 6. 相亲间按钮 ---- */
-document.querySelectorAll('.room-actions .btn[data-act]').forEach(btn => {
-  btn.addEventListener('click', function() {
-    this.style.transform = 'scale(0.92)';
-    setTimeout(() => { this.style.transform = ''; }, 200);
-  });
+/* ---- 6. 好感度 / 容忍度系统 ---- */
+var roomLove = 0, roomTolerate = 0, roomMaxRounds = 6, roomCurrentRound = 0;
+var loveTriggered = false, tolerateTriggered = false;
+
+function updateMeter(type, value) {
+  value = Math.max(0, Math.min(100, Math.round(value)));
+  if (type === 'love') {
+    roomLove = value;
+    var fill = document.getElementById('love-fill');
+    var txt = document.getElementById('love-value');
+    if (fill) fill.style.width = value + '%';
+    if (txt) txt.textContent = value + '%';
+    // 好感度 100% 触发爱心特效
+    if (value >= 100 && !loveTriggered) {
+      loveTriggered = true;
+      triggerLoveBurst();
+      toast('好感度爆表！看起来很般配');
+    }
+  } else {
+    roomTolerate = value;
+    var fill = document.getElementById('tolerate-fill');
+    var txt = document.getElementById('tolerate-value');
+    if (fill) fill.style.width = value + '%';
+    if (txt) txt.textContent = value + '%';
+    // 容忍度 100% 触发退退退特效
+    if (value >= 100 && !tolerateTriggered) {
+      tolerateTriggered = true;
+      triggerTuiEffect();
+      toast('容忍度爆表！看不下去了...');
+    }
+  }
+}
+
+function updateProgress(current, max) {
+  roomCurrentRound = current;
+  roomMaxRounds = max || 6;
+  var pct = Math.round((current / roomMaxRounds) * 100);
+  var fill = document.getElementById('room-progress-fill');
+  var txt = document.getElementById('room-progress-text');
+  if (fill) fill.style.width = pct + '%';
+  if (txt) txt.textContent = current + ' / ' + roomMaxRounds + ' 轮';
+}
+
+function triggerLoveBurst() {
+  var container = document.getElementById('love-burst');
+  if (!container) return;
+  var hearts = ['💗', '💕', '❤️', '💖', '💘', '🥰', '😍'];
+  for (var i = 0; i < 20; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var h = document.createElement('span');
+        h.className = 'heart';
+        h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+        h.style.left = (10 + Math.random() * 80) + '%';
+        h.style.top = (40 + Math.random() * 40) + '%';
+        h.style.fontSize = (1.2 + Math.random() * 2) + 'rem';
+        h.style.animationDelay = (Math.random() * 0.3) + 's';
+        container.appendChild(h);
+        setTimeout(function() { h.remove(); }, 2500);
+      }, idx * 100);
+    })(i);
+  }
+}
+
+function triggerTuiEffect() {
+  var el = document.getElementById('tui-fullscreen');
+  if (!el) return;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+
+function resetRoomMeters() {
+  roomLove = 0; roomTolerate = 0; roomCurrentRound = 0;
+  loveTriggered = false; tolerateTriggered = false;
+  updateMeter('love', 0);
+  updateMeter('tolerate', 0);
+  updateProgress(0, roomMaxRounds);
+}
+
+// 手动增加好感度
+document.getElementById('btn-love-boost').addEventListener('click', function() {
+  updateMeter('love', 100);
+  this.style.transform = 'scale(1.3)';
+  setTimeout(() => { this.style.transform = ''; }, 300);
 });
-document.getElementById('btn-tui').addEventListener('click', function() {
-  var popup = document.getElementById('tui-popup');
-  popup.classList.add('show');
-  setTimeout(() => popup.classList.remove('show'), 1500);
+
+// 手动增加容忍度
+document.getElementById('btn-tolerate-boost').addEventListener('click', function() {
+  updateMeter('tolerate', 100);
+  this.style.transform = 'scale(1.3)';
+  setTimeout(() => { this.style.transform = ''; }, 300);
 });
 function exitRoom() {
+  window._sseIntentionalClose = true; // 阻止 onerror 重连
   if (window._currentEvt) { try { window._currentEvt.close(); } catch(_) {} window._currentEvt = null; }
   showLoader('正在退出...');
   setTimeout(() => { showPage('page-lobby'); fetchLobby(); hideLoader(); toast('已退出相亲间'); }, 300);
